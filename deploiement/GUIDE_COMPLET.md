@@ -135,6 +135,7 @@ les 30 minutes.
 | Language | **French** |
 | Pays | **France** |
 | Clavier | **Français** |
+| **Interface réseau principale** | **`enp0s3`** — voir l'encadré ci-dessous ⚠ |
 | Nom de machine | `vm1` — et `vm2` sur l'autre VM |
 | Domaine | laissez vide |
 | **Mot de passe root** | **LAISSEZ VIDE** puis Continuer ⚠ |
@@ -150,6 +151,25 @@ les 30 minutes.
 | Miroir | **France** puis `deb.debian.org` |
 | Proxy | laissez vide |
 | Participer à l'étude | **Non** |
+
+**⚠ Écran « Configurer le réseau » — choisir la bonne interface**
+
+Comme vos VM ont deux cartes réseau, l'installateur demande laquelle
+utiliser pendant l'installation :
+
+```
+Interface réseau principale :
+    enp0s3: Intel Corporation 82540EM Gigabit Ethernet Controller
+    enp0s8: Intel Corporation 82540EM Gigabit Ethernet Controller
+```
+
+**Choisissez `enp0s3`**, la première, déjà surlignée — il suffit
+d'appuyer sur Entrée.
+
+`enp0s3` est l'Adaptateur 1, le **NAT**, celui qui donne accès à
+Internet : l'installateur en a besoin pour télécharger les paquets.
+`enp0s8` est l'Adaptateur 2, le réseau privé entre les VM, sans accès
+Internet — le choisir ferait échouer l'installation.
 
 **⚠ Écran « Sélection des logiciels » — le plus important**
 
