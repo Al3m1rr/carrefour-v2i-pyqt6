@@ -31,6 +31,19 @@ l'[étape 3](#étape-3--relier-les-deux-vm-5-min).
 **Prérequis** : VirtualBox 7.x installé, 6 Go de RAM libres, 50 Go de
 disque, une connexion Internet.
 
+### Trois règles qui évitent l'essentiel des pertes de temps
+
+1. **Tout se fait sur les DEUX VM.** Chaque commande de ce guide, sauf
+   mention contraire, est à répéter sur l'autre machine. L'erreur la
+   plus fréquente est de corriger un problème sur une seule VM et de
+   chercher ensuite pourquoi ça ne marche toujours pas.
+2. **Ne sautez aucun point de contrôle** (encadrés ✅). Ils prennent
+   dix secondes et évitent de découvrir une erreur trois étapes plus
+   loin, quand la cause n'est plus évidente.
+3. **Travaillez en SSH depuis votre PC**, pas dans la fenêtre
+   VirtualBox : vous gardez votre clavier et vous pouvez copier-coller
+   les commandes. La marche à suivre est à l'[étape 3bis](#étape-3bis--se-connecter-en-ssh-depuis-son-pc-recommandé).
+
 ---
 
 ## Étape 1 — Télécharger Debian 13 (2–5 min)
@@ -231,6 +244,13 @@ réseau privé. Sauf raison particulière, gardez celles-ci :
 
 Notez-les, vous les passerez au script à l'étape 4.2.
 
+> **✅ Point de contrôle 1** — sur **chaque** VM :
+> - `enp0s3` est `UP` avec une adresse en `10.0.2.x` → Internet d'accord
+> - `enp0s8` apparaît, même `DOWN` → la carte privée existe
+>
+> Si l'un des deux manque, corrigez maintenant : la suite n'a aucune
+> chance de fonctionner.
+
 ### Si `enp0s8` n'apparaît pas du tout
 
 Là, en revanche, il y a un problème : l'Adaptateur 2 n'a pas été
@@ -245,6 +265,40 @@ Vérifiez que l'Adaptateur 1 est bien en **NAT** dans la configuration
 de la VM.
 
 ---
+
+## Étape 3bis — Se connecter en SSH depuis son PC (recommandé)
+
+Travailler dans la fenêtre VirtualBox est pénible : clavier parfois en
+QWERTY, pas de copier-coller, et une seule console à la fois. Cinq
+minutes d'installation vous en feront gagner beaucoup plus.
+
+Sur votre PC, **une fois par VM**, créez une redirection de port :
+
+```bash
+VBoxManage controlvm "VM1-Simulation" natpf1 "ssh,tcp,127.0.0.1,2401,,22"
+```
+```bash
+VBoxManage controlvm "VM2-Passerelle" natpf1 "ssh,tcp,127.0.0.1,2402,,22"
+```
+
+> Sous Windows, si `VBoxManage` n'est pas reconnu, utilisez son chemin
+> complet : `& "C:\Program Files\Oracle\VirtualBox\VBoxManage.exe" ...`
+> Si la VM est éteinte, remplacez `controlvm` par `modifyvm`.
+
+Ouvrez ensuite **deux terminaux** sur votre PC :
+
+```bash
+ssh -p 2401 carrefour@127.0.0.1
+```
+```bash
+ssh -p 2402 carrefour@127.0.0.1
+```
+
+Gardez ces deux terminaux ouverts : un par VM, pour toute la suite.
+
+> Une fois le réseau privé opérationnel (étape 4.3), vous pourrez aussi
+> vous connecter directement par l'adresse privée, sans redirection :
+> `ssh carrefour@192.168.56.10`
 
 ## Étape 4 — Déployer le projet (5 min)
 
@@ -291,26 +345,55 @@ sudo IP_LOCALE=192.168.56.11 IP_MOTEUR=192.168.56.10 bash deploiement/installer_
 > DHCP actif, ou de VM fournies déjà configurées — omettez `IP_LOCALE`
 > et le script ne touchera pas à votre réseau.
 
+Dans la sortie du script, cherchez cette ligne, qui confirme que la
+carte privée a bien pris son adresse :
+
+```
+OK : enp0s8 porte 192.168.56.10
+```
+
+Si vous lisez `ECHEC` à la place, la VM n'a pas de seconde carte
+réseau : reprenez l'étape 2.2.
+
 ### 4.3 Vérifier que les deux VM se voient
 
-Maintenant que les adresses sont posées, depuis la **VM2** :
+**N'allez pas plus loin tant que cette étape n'est pas verte.** C'est
+le point de bascule : tant que les VM ne se voient pas, rien d'autre ne
+peut fonctionner.
+
+Sur **chaque** VM, vérifiez d'abord que chaque carte porte **une seule**
+adresse, la bonne :
+
+```bash
+ip -brief addr
+```
+
+Attendu sur la VM1 :
+
+```
+enp0s3   UP   10.0.2.15/24          <- Internet, PAS d'adresse 192.168.56.x
+enp0s8   UP   192.168.56.10/24      <- réseau privé
+```
+
+> ⚠ **Si `192.168.56.x` apparaît sur `enp0s3`**, la machine a deux
+> routes concurrentes vers le même réseau et devient invisible pour
+> l'autre VM, tout en paraissant correctement configurée. Relancez le
+> script de l'étape 4.2 : il détecte et répare ce cas, en affichant
+> `Nettoyage : ... retiree de enp0s3`.
+
+Puis, depuis la **VM2** :
 
 ```bash
 ping -c 3 192.168.56.10
 ```
 
-Des réponses = les deux VM communiquent, vous pouvez lancer.
+> **✅ Point de contrôle 2** — le ping répond. Vous pouvez lancer.
+>
+> `Destination Host Unreachable` signifie que l'autre VM ne répond pas
+> à l'appel réseau. Dans 9 cas sur 10, c'est que **vous n'avez fait
+> l'étape 4.2 que sur une seule des deux VM**. Vérifiez l'autre.
 
-Pas de réponse ? Vérifiez sur chaque VM que `enp0s8` est bien montée :
-
-```bash
-ip -brief addr show enp0s8
-```
-
-Si elle est toujours `DOWN`, c'est que les deux VM ne partagent pas le
-même réseau privé dans VirtualBox (étape 2.2).
-
-En cas de doute, ce script diagnostique sans rien modifier :
+En cas de doute, ce script fait le tour sans rien modifier :
 
 ```bash
 ./deploiement/verifier.sh 192.168.56.10
@@ -351,6 +434,17 @@ La ligne qui prouve que les deux VM communiquent :
 ```
 [Lien moteur] Connecte au moteur 192.168.56.10:5051
 ```
+
+> **✅ Point de contrôle 3** — vous voyez bien `Connecte au moteur`.
+>
+> Si à la place la VM2 répète
+> `VM1 injoignable ([Errno 113] No route to host)` toutes les 3
+> secondes, le réseau privé n'est pas opérationnel : revenez à
+> l'étape 4.3. Inutile de lancer le client, il ne verra rien.
+>
+> Bonne nouvelle : la passerelle réessaie en continu. Dès que vous
+> réparez le réseau, elle se connecte **toute seule**, sans rien
+> relancer.
 
 ### 5.3 Votre PC — l'interface graphique
 
@@ -452,6 +546,11 @@ inversement.
 2. **VM2** : **Ctrl + C**. Vous devez voir
    `[DB:passerelle] Bilan de session enregistre.`
    C'est cette étape qui écrit le bilan en base, ne la sautez pas.
+
+   > Si vous lisez plutôt `Aucun bilan a enregistrer : aucun etat recu
+   > du moteur pendant cette session`, c'est que la passerelle n'a
+   > jamais réussi à joindre la VM1 : il n'y avait rien à enregistrer.
+   > La ligne restera à `NULL` en base, c'est normal.
 3. **VM1** : **Ctrl + C**.
 4. Sur chaque VM : `sudo poweroff`
 
@@ -461,8 +560,28 @@ Pour relancer plus tard, reprenez directement à l'**étape 5**.
 
 ## En cas de problème
 
+### Les trois commandes qui disent presque tout
+
+Lancez-les **sur chaque VM** avant de chercher plus loin :
+
+```bash
+ip -brief addr
+```
+```bash
+ip route
+```
+```bash
+./deploiement/verifier.sh 192.168.56.10
+```
+
+La première révèle les adresses mal placées, la deuxième les routes en
+double, la troisième tout le reste.
+
 | Ce que vous voyez | Cause et solution |
 |---|---|
+| `Destination Host Unreachable` au ping | **Le plus fréquent** : l'étape 4.2 n'a été faite que sur une seule VM. Faites-la sur l'autre |
+| `192.168.56.x` présent sur `enp0s3` | Adresse privée posée sur la carte Internet : deux routes concurrentes, la VM devient invisible. Relancez l'étape 4.2, le script répare |
+| `ip route` montre deux lignes `192.168.56.0/24` | Même cause que ci-dessus |
 | L'interface affiche « Mode dégradé » | La passerelle n'est pas lancée sur la VM2, ou mauvaise adresse dans `CARREFOUR_SOCKET_SERVEUR_HOTE` |
 | La VM2 répète « VM1 injoignable » | Le moteur n'est pas lancé, ou `IP_MOTEUR` est fausse. Relancez l'étape 4.2 |
 | Le `ping` entre les VM ne passe pas | Carte réseau privée absente ou différente entre les deux. Reprenez l'étape 3 |
