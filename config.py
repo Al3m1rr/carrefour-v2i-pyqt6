@@ -119,18 +119,38 @@ COULEUR_MARQUAGE = "#E5E7EB"
 COULEUR_COULOIR = "#EF4444"
 
 # ============================================================
-#  BASE DE DONNEES (VM Serveur)
+#  BASES DE DONNEES (une par VM, chacune locale a son processus)
 # ============================================================
-DB_CONFIG = {
-    "host": os.environ.get("CARREFOUR_DB_HOST", "127.0.0.1"),
-    "user": os.environ.get("CARREFOUR_DB_USER", "carrefour_user"),
-    "password": os.environ.get("CARREFOUR_DB_PASSWORD", "changeme"),
-    "database": os.environ.get("CARREFOUR_DB_NAME", "carrefour_db"),
+# VM1 "Simulation" : tables `usager` et `evenement`, ecrites en temps reel
+# par le moteur. Colocaliser la base avec son producteur evite un
+# aller-retour reseau a chaque entree / sortie d'usager.
+DB_MOTEUR_CONFIG = {
+    "host": os.environ.get("CARREFOUR_DB_MOTEUR_HOST", "127.0.0.1"),
+    "user": os.environ.get("CARREFOUR_DB_MOTEUR_USER", "carrefour_user"),
+    "password": os.environ.get("CARREFOUR_DB_MOTEUR_PASSWORD", "changeme"),
+    "database": os.environ.get("CARREFOUR_DB_MOTEUR_NAME", "carrefour_moteur_db"),
+}
+
+# VM2 "Passerelle" : table `session_simulation`, ecrite en fin de session
+# par le processus qui pilote les connexions clients.
+DB_PASSERELLE_CONFIG = {
+    "host": os.environ.get("CARREFOUR_DB_PASSERELLE_HOST", "127.0.0.1"),
+    "user": os.environ.get("CARREFOUR_DB_PASSERELLE_USER", "carrefour_user"),
+    "password": os.environ.get("CARREFOUR_DB_PASSERELLE_PASSWORD", "changeme"),
+    "database": os.environ.get("CARREFOUR_DB_PASSERELLE_NAME", "carrefour_stats_db"),
 }
 
 # ============================================================
 #  RESEAU (V2I par sockets TCP)
 # ============================================================
+# Facade client : la passerelle (VM2) ecoute ici, les clients PyQt6 et
+# l'application ambulance s'y connectent.
 SOCKET_ECOUTE_HOTE = os.environ.get("CARREFOUR_SOCKET_ECOUTE", "0.0.0.0")
 SOCKET_PORT = int(os.environ.get("CARREFOUR_SOCKET_PORT", "5050"))
-SOCKET_SERVEUR_HOTE = os.environ.get("CARREFOUR_SOCKET_SERVEUR_HOTE", "192.168.56.10")
+SOCKET_SERVEUR_HOTE = os.environ.get("CARREFOUR_SOCKET_SERVEUR_HOTE", "192.168.56.11")
+
+# Liaison interne entre les deux VM : le moteur (VM1) ecoute, la
+# passerelle (VM2) s'y connecte en tant que client.
+MOTEUR_ECOUTE_HOTE = os.environ.get("CARREFOUR_MOTEUR_ECOUTE", "0.0.0.0")
+MOTEUR_PORT = int(os.environ.get("CARREFOUR_MOTEUR_PORT", "5051"))
+MOTEUR_HOTE = os.environ.get("CARREFOUR_MOTEUR_HOTE", "192.168.56.10")

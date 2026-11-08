@@ -1,9 +1,15 @@
-"""Connexion à la base MariaDB du projet.
+"""Connexion aux bases MariaDB du projet.
 
-Si la connexion échoue (VM Serveur éteinte, mauvaise IP, etc.), la
-simulation continue de fonctionner SANS enregistrement en base --
-pratique pour tester/développer le code sans avoir la VM Serveur
-allumée en permanence."""
+Le projet est reparti sur deux VM, chacune avec sa propre base locale :
+
+- VM1 "Simulation"  -> `carrefour_moteur_db`  (tables usager, evenement)
+- VM2 "Passerelle"  -> `carrefour_stats_db`   (table session_simulation)
+
+Chaque processus ouvre donc SA base, en local (127.0.0.1 de son cote).
+Si la connexion echoue (service MariaDB arrete, mauvais identifiants),
+le processus continue de fonctionner SANS enregistrement : la simulation
+reste utilisable pour une demonstration meme base indisponible.
+"""
 
 import config
 
@@ -15,16 +21,40 @@ except ImportError:
     MySQLError = Exception
 
 
-def obtenir_connexion():
+def obtenir_connexion(parametres, libelle="base"):
+    """Ouvre une connexion MariaDB a partir d'un dictionnaire de parametres.
+
+    Args:
+        parametres (dict): configuration de connexion (host, user,
+            password, database), typiquement config.DB_MOTEUR_CONFIG ou
+            config.DB_PASSERELLE_CONFIG.
+        libelle (str): nom lisible de la base, utilise dans les messages
+            affiches dans la console.
+
+    Returns:
+        Une connexion mysql.connector ouverte, ou None si la base est
+        injoignable (le processus appelant doit alors fonctionner sans).
+    """
     if mysql is None:
-        print("[DB] mysql-connector-python n'est pas installé -- base désactivée.")
-        print("[DB] Installe-le avec : pip install mysql-connector-python")
+        print(f"[DB:{libelle}] mysql-connector-python absent -- base desactivee.")
+        print("[DB] Installez-le avec : pip install mysql-connector-python")
         return None
     try:
-        connexion = mysql.connector.connect(**config.DB_CONFIG)
+        connexion = mysql.connector.connect(**parametres)
         if connexion.is_connected():
-            print("[DB] Connexion à MariaDB réussie.")
+            print(f"[DB:{libelle}] Connexion a {parametres['database']}"
+                  f"@{parametres['host']} reussie.")
             return connexion
     except MySQLError as e:
-        print(f"[DB] Connexion impossible ({e}) -- la simulation continue sans base.")
+        print(f"[DB:{libelle}] Connexion impossible ({e}) -- on continue sans base.")
     return None
+
+
+def connexion_moteur():
+    """Ouvre la base locale de la VM1 (usagers et evenements)."""
+    return obtenir_connexion(config.DB_MOTEUR_CONFIG, "moteur")
+
+
+def connexion_passerelle():
+    """Ouvre la base locale de la VM2 (bilans de session)."""
+    return obtenir_connexion(config.DB_PASSERELLE_CONFIG, "passerelle")
