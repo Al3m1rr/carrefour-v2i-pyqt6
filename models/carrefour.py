@@ -28,7 +28,12 @@ BRANCHE_OPPOSEE = {"N": "S", "S": "N", "E": "W", "W": "E"}
 
 
 class Carrefour:
+    """Géométrie du carrefour : axes des voies, points remarquables et
+    trajectoires. Ne contient aucune logique de circulation, uniquement
+    le calcul des coordonnées à partir des paramètres de config.py."""
+
     def __init__(self):
+        """Mémorise le centre et les dimensions issus de la configuration."""
         self.cx = config.CENTRE_X
         self.cy = config.CENTRE_Y
         self.offset = config.OFFSET_VOIE
@@ -48,7 +53,12 @@ class Carrefour:
         }[branche]
 
     def axe_voie_sortante(self, branche, decalage=0.0):
-        """Coordonnée fixe de la voie par laquelle on SORT vers cette branche."""
+        """Coordonnée fixe de la voie par laquelle on SORT vers cette branche.
+
+        C'est la voie symétrique de l'entrante : la distinguer permet
+        d'interdire une sortie (couloir prioritaire) sans bloquer
+        l'entrée correspondante.
+        """
         return {
             "N": self.cx + self.offset + decalage,
             "S": self.cx - self.offset - decalage,
@@ -59,6 +69,7 @@ class Carrefour:
     # ---------- Points remarquables ----------
 
     def point_entree(self, branche, decalage=0.0):
+        """Point d'apparition d'un usager, juste hors de l'écran."""
         v = self.axe_voie_entrante(branche, decalage)
         return {
             "N": (v, -20.0),
@@ -68,6 +79,7 @@ class Carrefour:
         }[branche]
 
     def point_ligne_arret(self, branche, decalage=0.0):
+        """Point d'arrêt au feu rouge, situé AVANT le passage piéton."""
         v = self.axe_voie_entrante(branche, decalage)
         la = config.LIGNE_ARRET
         return {
@@ -78,6 +90,7 @@ class Carrefour:
         }[branche]
 
     def point_sortie(self, branche, decalage=0.0):
+        """Point de disparition d'un usager, juste hors de l'écran."""
         v = self.axe_voie_sortante(branche, decalage)
         return {
             "N": (v, -20.0),
@@ -89,7 +102,18 @@ class Carrefour:
     # ---------- Trajectoires ----------
 
     def construire_route(self, branche_entree, branche_sortie, decalage=0.0):
-        """Liste de waypoints : entrée -> ligne d'arrêt -> (virage) -> sortie."""
+        """Liste de waypoints : entrée -> ligne d'arrêt -> (virage) -> sortie.
+
+        Args:
+            branche_entree (str): branche d'où vient l'usager (N/S/E/W).
+            branche_sortie (str): branche vers laquelle il repart.
+            decalage (float): décalage vers le bord droit de la voie,
+                utilisé pour placer les cyclistes sur la bande cyclable.
+
+        Returns:
+            La liste des waypoints (x, y) à suivre. Un point de pivot
+            supplémentaire est inséré pour les trajectoires qui tournent.
+        """
         entree = self.point_entree(branche_entree, decalage)
         arret = self.point_ligne_arret(branche_entree, decalage)
         sortie = self.point_sortie(branche_sortie, decalage)
@@ -113,10 +137,12 @@ class Carrefour:
     # ---------- Zones ----------
 
     def zone_conflit(self):
+        """Rectangle central (x1, y1, x2, y2) où les trajectoires se croisent."""
         return (self.cx - self.demi_zone, self.cy - self.demi_zone,
                 self.cx + self.demi_zone, self.cy + self.demi_zone)
 
     def dans_zone_conflit(self, x, y):
+        """Indique si un point se trouve dans l'intersection elle-même."""
         x1, y1, x2, y2 = self.zone_conflit()
         return x1 <= x <= x2 and y1 <= y <= y2
 

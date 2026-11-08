@@ -39,7 +39,21 @@ DUREE_MAX_COULOIR = 900   # ticks (30 s)
 
 
 class Couloir:
+    """Voie réservée accordée à un véhicule d'urgence donné.
+
+    Mémorise l'itinéraire protégé (entrée, sortie, axe) afin que la
+    centrale puisse décider quels autres usagers peuvent l'emprunter et
+    lesquels doivent être déviés.
+    """
+
     def __init__(self, vehicule, tick_ouverture=0):
+        """Ouvre un couloir pour le véhicule donné.
+
+        Args:
+            vehicule (Vehicule): le bénéficiaire du couloir.
+            tick_ouverture (int): tick auquel le couloir est ouvert,
+                servant à mesurer sa durée de vie.
+        """
         self.vehicule_id = vehicule.id
         self.priorite = vehicule.priorite
         self.tick_ouverture = tick_ouverture
@@ -49,6 +63,7 @@ class Couloir:
         self.beneficiaire_present = False
 
     def vers_dict(self):
+        """Sérialise l'état du couloir pour l'envoi aux clients."""
         return {
             "vehicule_id": self.vehicule_id,
             "priorite": self.priorite,
@@ -60,7 +75,18 @@ class Couloir:
 
 
 class CentraleV2I:
+    """Infrastructure connectée du carrefour : reçoit les alertes des
+    véhicules d'urgence, accorde les voies réservées, arbitre entre
+    plusieurs urgences et dévie les usagers gênants."""
+
     def __init__(self, carrefour, feu):
+        """Prépare la centrale sans aucune alerte en cours.
+
+        Args:
+            carrefour (Carrefour): géométrie, pour recalculer les
+                itinéraires des usagers déviés.
+            feu (FeuCirculation): feux à préempter pendant un couloir.
+        """
         self.carrefour = carrefour
         self.feu = feu
         self.couloir = None
@@ -79,12 +105,26 @@ class CentraleV2I:
 
     def recevoir_alerte(self, vehicule, tick_courant):
         """Message V2I : 'j'arrive par telle branche, je vais tout droit,
-        j'arrive dans DELAI_ALERTE ticks, ma priorité est N'."""
+        j'arrive dans DELAI_ALERTE ticks, ma priorité est N'.
+
+        Le véhicule n'entre pas tout de suite : il reste « en approche »
+        le temps que la voie se vide devant lui.
+
+        Args:
+            vehicule (Vehicule): l'émetteur de l'alerte.
+            tick_courant (int): tick de réception, base du compte à rebours.
+        """
         vehicule.en_approche = True
         vehicule.tick_arrivee = tick_courant + config.DELAI_ALERTE
         self.alertes_en_approche.append(vehicule)
 
     def annuler_derniere_alerte(self):
+        """Annule l'alerte la plus récente dont le véhicule n'est pas arrivé.
+
+        Returns:
+            Le véhicule dont l'alerte est annulée, ou None s'il n'y en a
+            aucune en approche.
+        """
         if not self.alertes_en_approche:
             return None
         return self.alertes_en_approche.pop()
@@ -94,6 +134,17 @@ class CentraleV2I:
     # ------------------------------------------------------------
 
     def traiter_alertes(self, usagers, tick_courant=0):
+        """Met à jour l'attribution du couloir prioritaire, à chaque tick.
+
+        Enchaîne quatre décisions : fermer le couloir devenu inutile,
+        le réattribuer à une urgence plus prioritaire encore en approche,
+        en ouvrir un nouveau si aucun n'est actif, puis recalculer qui a
+        le droit d'emprunter la voie réservée.
+
+        Args:
+            usagers (list): tous les usagers présents dans la simulation.
+            tick_courant (int): tick courant de la simulation.
+        """
         presentes = [u for u in usagers
                      if getattr(u, "urgence", False) and not u.est_sorti]
         for u in presentes:
@@ -144,6 +195,7 @@ class CentraleV2I:
 
     @staticmethod
     def _trouver(liste, identifiant):
+        """Retrouve un usager par son identifiant, ou None s'il a disparu."""
         return next((u for u in liste if u.id == identifiant), None)
 
     def _compatible(self, u):
@@ -161,17 +213,20 @@ class CentraleV2I:
         return meme_itineraire or sens_oppose
 
     def _peut_emprunter_couloir(self, u):
+        """Indique si cette urgence a le droit d'emprunter la voie réservée."""
         if self.couloir is None:
             return False
         return u.id == self.couloir.vehicule_id or self._compatible(u)
 
     def _ouvrir_couloir(self, vehicule, usagers, tick_courant=0):
+        """Ouvre un couloir : force les feux et dévie les usagers gênants."""
         self.couloir = Couloir(vehicule, tick_courant)
         self.nb_couloirs_ouverts += 1
         self.feu.forcer(self.couloir.axe)
         self._devier_vehicules_genants(usagers)
 
     def _fermer_couloir(self):
+        """Ferme le couloir et rend la main au cycle normal des feux."""
         self.couloir = None
         self.feu.liberer()
 
@@ -180,6 +235,12 @@ class CentraleV2I:
     # ------------------------------------------------------------
 
     def _devier_vehicules_genants(self, usagers):
+        """Détourne les usagers qui comptaient emprunter la voie réservée.
+
+        Les véhicules déjà engagés dans l'intersection ne sont jamais
+        déviés : changer leur trajectoire en plein carrefour provoquerait
+        des collisions.
+        """
         for u in usagers:
             if u.est_sorti or getattr(u, "urgence", False):
                 continue
@@ -195,11 +256,17 @@ class CentraleV2I:
             self.nb_deviations += 1
 
     def _destination_de_repli(self, branche):
+        """Choisit au hasard une sortie qui n'est pas celle du couloir."""
         options = [d for d in DESTINATIONS[branche].values()
                    if d != self.couloir.branche_sortie]
         return random.choice(options) if options else None
 
     def _reconstruire_itineraire(self, usager, nouvelle_destination):
+        """Recalcule la trajectoire d'un usager dévié, depuis sa position.
+
+        Seuls les waypoints situés devant lui sont conservés : repartir
+        du début de la nouvelle route le ferait reculer brutalement.
+        """
         decalage = config.DECALAGE_CYCLABLE if usager.type_usager == "cycliste" else 0.0
         nouvelle_route = self.carrefour.construire_route(usager.branche, nouvelle_destination, decalage)
         restants = [p for p in nouvelle_route[1:] if self._est_devant(usager, p)]
@@ -211,6 +278,7 @@ class CentraleV2I:
         usager._maj_cap()
 
     def _est_devant(self, usager, point):
+        """Indique si un point est devant l'usager (produit scalaire > 0)."""
         dx, dy = point[0] - usager.x, point[1] - usager.y
         return dx * usager.cap[0] + dy * usager.cap[1] > 0
 
@@ -233,22 +301,40 @@ class CentraleV2I:
                 and benef.tick_arrivee - self._tick <= config.PREEMPTION_AVANT_ARRIVEE)
 
     def branche_retenue(self, branche):
+        """Indique si le trafic de cette branche est retenu (trafic d'en face).
+
+        Le trafic venant d'en face est bloqué pendant la préemption
+        renforcée : sinon, les véhicules qui tournent à gauche devant
+        l'ambulance lui céderaient le passage indéfiniment.
+        """
         if not self.preemption_renforcee():
             return False
         return branche == BRANCHE_OPPOSEE[self.couloir.branche_entree]
 
     def couloir_actif(self):
+        """Indique si une voie réservée est actuellement ouverte."""
         return self.couloir is not None
 
     def sortie_interdite(self, branche_sortie):
+        """Indique si cette voie de sortie est réservée aux secours."""
         return self.couloir is not None and self.couloir.branche_sortie == branche_sortie
 
     def destination_autorisee(self, usager):
+        """Indique si cet usager peut rejoindre sa destination actuelle.
+
+        Les véhicules d'urgence ne sont jamais bloqués par un couloir.
+        """
         if getattr(usager, "urgence", False):
             return True
         return not self.sortie_interdite(getattr(usager, "destination", None))
 
     def branches_sens_interdit(self):
+        """Retourne les branches en sens interdit « sauf urgences ».
+
+        Returns:
+            Un dict {"entree": [...], "sortie": [...]} des branches où
+            le panneau doit s'allumer côté client.
+        """
         if not self.couloir:
             return {"entree": [], "sortie": []}
         return {"entree": [self.couloir.branche_entree],
@@ -259,6 +345,16 @@ class CentraleV2I:
     # ------------------------------------------------------------
 
     def vers_dict(self, tick_courant=0):
+        """Sérialise l'état complet de la centrale pour le panneau V2I.
+
+        Args:
+            tick_courant (int): tick courant, pour calculer les comptes
+                à rebours d'arrivée affichés côté client.
+
+        Returns:
+            Un dict décrivant le couloir actif, les sens interdits et la
+            liste des alertes en cours, triées par priorité.
+        """
         alertes = []
         for u in sorted(self._toutes, key=lambda v: (v.priorite, v.tick_arrivee, v.id)):
             if u.id in self._deja_servis:

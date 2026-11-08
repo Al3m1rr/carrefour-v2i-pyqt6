@@ -18,11 +18,25 @@ from reseau.protocole import encoder_message, extraire_messages
 
 
 class ThreadReseau(QThread):
+    """Thread de réception réseau du client, isolé de l'interface.
+
+    Tout ce qui arrive du réseau ressort sous forme de signaux Qt : le
+    thread ne touche jamais un widget lui-même, ce qui est la règle de
+    thread-safety imposée par le projet.
+    """
+
     etat_recu = pyqtSignal(dict)            # état de la simulation
     statut_connexion = pyqtSignal(bool, str)  # connecté ?, message
     info_recue = pyqtSignal(str)            # réponse du serveur à une commande
 
     def __init__(self, hote, port, parent=None):
+        """Mémorise l'adresse de la passerelle sans encore s'y connecter.
+
+        Args:
+            hote (str): adresse de la VM2 (passerelle).
+            port (int): port d'écoute de la passerelle.
+            parent: parent Qt éventuel.
+        """
         super().__init__(parent)
         self.hote = hote
         self.port = port
@@ -43,6 +57,11 @@ class ThreadReseau(QThread):
                 time.sleep(3)
 
     def _connecter_et_ecouter(self):
+        """Ouvre la connexion et émet un signal par message reçu.
+
+        Rend la main quand la connexion se ferme ; c'est run() qui
+        décide alors de retenter.
+        """
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
             sock.connect((self.hote, self.port))
             with self._verrou_envoi:
@@ -83,6 +102,12 @@ class ThreadReseau(QThread):
                 return False
 
     def arreter(self):
+        """Interrompt la réception et attend la fin du thread.
+
+        Le shutdown() force le recv() bloquant à rendre la main tout de
+        suite, sinon la fermeture de l'application attendrait le
+        prochain message du serveur.
+        """
         self._actif = False
         with self._verrou_envoi:
             if self._sock is not None:

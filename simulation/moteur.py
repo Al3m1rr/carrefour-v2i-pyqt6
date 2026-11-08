@@ -46,7 +46,21 @@ NOMS_BRANCHES = {"N": "le nord", "S": "le sud", "E": "l'est", "W": "l'ouest"}
 
 
 class MoteurSimulation:
+    """Cœur métier de la simulation : fait vivre le carrefour tick par tick.
+
+    Rassemble la géométrie, les feux, la centrale V2I et le générateur
+    de trafic, et applique à chaque tick les règles de circulation qui
+    déterminent la vitesse de chaque usager.
+    """
+
     def __init__(self, dao=None):
+        """Construit un carrefour vide, prêt à tourner.
+
+        Args:
+            dao (DAOMoteur): accès à la base pour journaliser les
+                entrées, sorties et événements. None désactive toute
+                écriture : la simulation reste utilisable sans base.
+        """
         self.carrefour = Carrefour()
         self.feu = FeuCirculation()
         self.centrale = CentraleV2I(self.carrefour, self.feu)
@@ -63,6 +77,14 @@ class MoteurSimulation:
     # ------------------------------------------------------------
 
     def tick(self):
+        """Avance la simulation d'un pas de temps.
+
+        L'ordre des étapes est important : les alertes V2I sont traitées
+        avant le cycle des feux (pour pouvoir le préempter), et les
+        décisions de vitesse sont toutes prises avant le moindre
+        déplacement, afin que tous les usagers raisonnent sur le même
+        état du carrefour.
+        """
         self.tick_courant += 1
         self._traiter_ajouts_en_attente()
         self._faire_arriver_urgences()
@@ -110,6 +132,12 @@ class MoteurSimulation:
 
     @staticmethod
     def _tirer_priorite():
+        """Tire un niveau de priorité (1 à 3) selon la répartition configurée.
+
+        Returns:
+            Le niveau tiré : 1 (urgence vitale), 2 (urgence) ou 3 (non
+            urgente).
+        """
         r, cumul = random.random(), 0.0
         for niveau, proba in sorted(config.REPARTITION_PRIORITES.items()):
             cumul += proba
@@ -148,6 +176,18 @@ class MoteurSimulation:
     # ------------------------------------------------------------
 
     def _decider_vitesse_vehicule(self, u, vehicules, pietons):
+        """Calcule et applique la consigne de vitesse d'un véhicule.
+
+        Les contraintes s'empilent du moins au plus contraignant : on
+        part de la vitesse maximale et chaque règle ne peut que la
+        réduire (distance de sécurité, refus de priorité, piéton engagé,
+        feu rouge).
+
+        Args:
+            u (Usager): le véhicule ou cycliste à piloter.
+            vehicules (list): tous les véhicules et cyclistes actifs.
+            pietons (list): tous les piétons actifs.
+        """
         consigne = u.vitesse_max
 
         # --- 1. Distance de sécurité avec celui de devant ---
@@ -240,7 +280,14 @@ class MoteurSimulation:
             u.decalage_cible = 0.0 if self._cycliste_a_cote(u, vehicules) else config.DECALAGE_SERRAGE
 
     def _urgence_derriere(self, u, urgences):
-        """Véhicule d'urgence qui arrive derrière u, dans la même voie."""
+        """Véhicule d'urgence qui arrive derrière u, dans la même voie.
+
+        Returns:
+            Un couple (urgence, position) où position vaut "derriere"
+            si elle nous suit encore, ou "devant" si elle est à notre
+            hauteur ou nous a dépassés. (None, None) si aucune urgence
+            n'est détectée à portée.
+        """
         for e in urgences:
             if e.est_sorti or e.branche != u.branche or e.sortie_intersection:
                 continue
@@ -259,6 +306,11 @@ class MoteurSimulation:
         return None, None  # aucune urgence détectée
 
     def _urgence_a_cote(self, u, urgences):
+        """Indique si une urgence est à hauteur de u, sur la même branche.
+
+        Tant que c'est le cas, u ne doit pas se replacer au centre de sa
+        voie : il se rabattrait sur le flanc de l'ambulance.
+        """
         for e in urgences:
             if e.est_sorti or e.branche != u.branche:
                 continue
@@ -283,6 +335,10 @@ class MoteurSimulation:
         return False
 
     def _cycliste_a_cote(self, u, vehicules):
+        """Indique si un cycliste roule à hauteur de u, sur la même branche.
+
+        Garde-fou de sécurité : on ne serre pas à droite sur un cycliste.
+        """
         for c in vehicules:
             if c.type_usager != "cycliste" or c.est_sorti or c.branche != u.branche:
                 continue
@@ -300,6 +356,23 @@ class MoteurSimulation:
         return u.vitesse_max * (distance / config.DISTANCE_RALENTI)
 
     def _peut_franchir(self, u, vehicules, pietons, distance_arret, gap):
+        """Décide si un véhicule a le droit de franchir sa ligne d'arrêt.
+
+        Rassemble toutes les règles du code de la route applicables à
+        l'entrée dans l'intersection : feu, voie réservée, préemption,
+        priorité piéton, interdiction de bloquer le carrefour et refus
+        de priorité en tourne-à-gauche.
+
+        Args:
+            u (Usager): le véhicule qui se présente à la ligne.
+            vehicules (list): véhicules et cyclistes actifs.
+            pietons (list): piétons actifs.
+            distance_arret (float): distance signée à la ligne d'arrêt.
+            gap (float): distance au véhicule de devant, ou None.
+
+        Returns:
+            True si le franchissement est autorisé, False sinon.
+        """
         axe = AXE_DE_BRANCHE[u.branche]
 
         # a) Véhicule prioritaire avec couloir accordé : il passe, mais il
@@ -376,6 +449,9 @@ class MoteurSimulation:
         return False
 
     def _axe_perpendiculaire_occupe(self, u, vehicules):
+        """Indique si un usager de l'axe perpendiculaire occupe encore
+        l'intersection. Même un véhicule prioritaire attend qu'elle soit
+        dégagée, sinon on provoque l'accident qu'on cherche à éviter."""
         mon_axe = AXE_DE_BRANCHE[u.branche]
         return any(
             AXE_DE_BRANCHE[a.branche] != mon_axe
@@ -412,6 +488,7 @@ class MoteurSimulation:
         return 0 < devant < config.DISTANCE_RALENTI
 
     def _pieton_engage_sur(self, branche, pietons):
+        """Indique si un piéton est engagé sur le passage de cette branche."""
         return any(p.engage and not p.est_sorti and p.branche == branche for p in pietons)
 
     def _intersection_occupee_par_autre(self, u, vehicules):
@@ -440,6 +517,7 @@ class MoteurSimulation:
         return False
 
     def _tourne_a_gauche(self, u):
+        """Indique si l'usager tourne à gauche, le cas qui coupe la voie d'en face."""
         destination = getattr(u, "destination", None)
         return destination is not None and destination == DESTINATIONS[u.branche]["gauche"]
 
@@ -558,6 +636,17 @@ class MoteurSimulation:
     # ------------------------------------------------------------
 
     def _decider_vitesse_pieton(self, p, vehicules):
+        """Décide si un piéton s'engage sur le passage, et à quelle vitesse.
+
+        Un piéton déjà engagé termine toujours sa traversée : il est
+        prioritaire et l'interrompre au milieu de la chaussée serait à
+        la fois irréaliste et dangereux.
+
+        Args:
+            p (Pieton): le piéton à piloter.
+            vehicules (list): véhicules actifs, pour vérifier que le
+                passage est dégagé avant de s'engager.
+        """
         if p.engage:
             p.ajuster_vitesse(p.vitesse_max)
             return
@@ -591,6 +680,11 @@ class MoteurSimulation:
     # ------------------------------------------------------------
 
     def _maj_etat_intersection(self, u):
+        """Met à jour les drapeaux d'entrée et de sortie de l'intersection.
+
+        Mémorise aussi le tick d'engagement, qui sert à départager les
+        conflits de croisement selon l'ordre d'arrivée.
+        """
         if isinstance(u, Pieton):
             return
         dedans = self.carrefour.dans_zone_conflit(u.x, u.y)
@@ -606,6 +700,12 @@ class MoteurSimulation:
     # ------------------------------------------------------------
 
     def _detecter_collisions(self, actifs):
+        """Compte les collisions résiduelles entre usagers.
+
+        Chaque paire n'est signalée qu'une fois : sans cela, deux
+        véhicules restés en contact plusieurs ticks gonfleraient
+        artificiellement le compteur d'accidents.
+        """
         for i in range(len(actifs)):
             for j in range(i + 1, len(actifs)):
                 a, b = actifs[i], actifs[j]
@@ -628,6 +728,7 @@ class MoteurSimulation:
     # ------------------------------------------------------------
 
     def _traiter_sorties(self):
+        """Horodate et journalise les usagers sortis, puis les retire."""
         encore_la = []
         for u in self.usagers:
             if u.est_sorti and u.heure_sortie is None:
@@ -649,7 +750,18 @@ class MoteurSimulation:
     def appliquer_commande(self, commande):
         """Applique une commande reçue du client. Appelée par la boucle
         principale du serveur ENTRE deux ticks : le moteur n'est jamais
-        modifié depuis un autre thread. Retourne un message de retour."""
+        modifié depuis un autre thread.
+
+        Les alertes issues d'un boîtier embarqué doivent porter une
+        signature HMAC valide : sans cela, n'importe qui sur le réseau
+        pourrait ouvrir un couloir prioritaire.
+
+        Args:
+            commande (dict): message {"action", "usager", ...} reçu.
+
+        Returns:
+            Le message de retour à afficher dans l'interface cliente.
+        """
         # Vérification de la signature pour les alertes d'urgence
         if commande.get("usager") == "vehicule_urgence" and commande.get("source") == "boitier_embarque":
             if _verif_hmac and not _verif_hmac(commande):
@@ -669,7 +781,16 @@ class MoteurSimulation:
 
     def annoncer_urgence(self, priorite=2):
         """Bouton + des urgences : une alerte V2I est émise, le véhicule
-        arrivera au carrefour DELAI_ALERTE plus tard."""
+        arrivera au carrefour DELAI_ALERTE plus tard.
+
+        Args:
+            priorite (int): niveau 1 à 3 ; toute valeur invalide est
+                ramenée à 2 plutôt que rejetée, pour qu'une alerte mal
+                formée n'empêche pas une intervention.
+
+        Returns:
+            Le message de confirmation destiné à l'interface.
+        """
         try:
             priorite = int(priorite)
         except (TypeError, ValueError):
@@ -687,7 +808,14 @@ class MoteurSimulation:
     def ajouter_usager(self, type_usager):
         """Ajoute un usager sur une entrée libre. Si toutes les entrées
         sont occupées (bouchon), la demande est mise en attente et
-        l'usager entrera dès qu'une place se libère."""
+        l'usager entrera dès qu'une place se libère.
+
+        Args:
+            type_usager (str): type d'usager demandé par l'opérateur.
+
+        Returns:
+            Le message de confirmation destiné à l'interface.
+        """
         branche = self._inserer(type_usager)
         if branche:
             return f"{NOMS_USAGERS[type_usager]} ajouté(e) depuis {NOMS_BRANCHES[branche]}"
@@ -697,7 +825,11 @@ class MoteurSimulation:
 
     def _inserer(self, type_usager):
         """Tente d'insérer l'usager sur une branche libre. Retourne la
-        branche utilisée, ou None si aucune place n'est disponible."""
+        branche utilisée, ou None si aucune place n'est disponible.
+
+        Les branches sont essayées dans un ordre aléatoire pour ne pas
+        privilégier toujours la même entrée.
+        """
         branches = list(config.BRANCHES)
         random.shuffle(branches)
         for branche in branches:
@@ -712,6 +844,7 @@ class MoteurSimulation:
         return None
 
     def _traiter_ajouts_en_attente(self):
+        """Réessaie d'insérer les usagers demandés alors que tout était plein."""
         restants = []
         for type_usager in self.ajouts_en_attente:
             if not self._inserer(type_usager):
@@ -720,7 +853,14 @@ class MoteurSimulation:
 
     def supprimer_usager(self, type_usager):
         """Retire l'usager de ce type le plus récemment arrivé. On évite
-        de retirer quelqu'un au milieu du carrefour quand c'est possible."""
+        de retirer quelqu'un au milieu du carrefour quand c'est possible.
+
+        Args:
+            type_usager (str): type d'usager à retirer.
+
+        Returns:
+            Le message de confirmation destiné à l'interface.
+        """
         # Urgence : on annule d'abord une alerte dont le véhicule n'est pas encore arrivé
         if type_usager == "vehicule_urgence":
             annulee = self.centrale.annuler_derniere_alerte()
@@ -746,6 +886,13 @@ class MoteurSimulation:
     # ------------------------------------------------------------
 
     def etat_reseau(self):
+        """Sérialise l'état complet du carrefour pour l'envoi réseau.
+
+        Returns:
+            Un dict JSON-sérialisable contenant les usagers visibles
+            (position effective, cap, état), les feux, l'état de la
+            centrale V2I et les statistiques courantes.
+        """
         return {
             "type": "etat",
             "tick": self.tick_courant,

@@ -33,6 +33,18 @@ LIBELLES_PRIORITE = {
 
 
 def envoyer_alerte(hote, port, priorite, branche):
+    """Envoie une alerte V2I signée au carrefour, puis affiche sa réponse.
+
+    L'alerte est signée en HMAC-SHA256 : le carrefour rejette toute
+    demande de couloir prioritaire dont la signature est absente ou
+    invalide, comme le ferait une vraie infrastructure V2X.
+
+    Args:
+        hote (str): adresse de la passerelle (VM2).
+        port (int): port d'écoute de la passerelle.
+        priorite (int): niveau 1 (vitale), 2 (urgence) ou 3 (non urgente).
+        branche (str): branche d'entrée prévue (N/S/E/W).
+    """
     from models.carrefour import DESTINATIONS
     destination = DESTINATIONS[branche]["tout_droit"]
 
@@ -100,6 +112,12 @@ def envoyer_alerte(hote, port, priorite, branche):
 
 
 def main():
+    """Lit les paramètres (arguments, variables d'environnement ou saisie).
+
+    Chaque paramètre absent de la ligne de commande est demandé de façon
+    interactive, ce qui permet d'utiliser l'application aussi bien en
+    démonstration manuelle que dans un script.
+    """
     hote = sys.argv[1] if len(sys.argv) > 1 else os.environ.get("CARREFOUR_SOCKET_SERVEUR_HOTE", "127.0.0.1")
     port = int(sys.argv[2]) if len(sys.argv) > 2 else int(os.environ.get("CARREFOUR_SOCKET_PORT", "5050"))
 

@@ -64,7 +64,20 @@ NB_TICKS_TRAFIC = 600  # trafic établi avant l'ambulance
 
 
 def essai(graine, conf):
-    """Mesure le temps de traversée d'une ambulance N→S dans une situation de trafic donnée."""
+    """Mesure le temps de traversée d'une ambulance N→S dans une situation de trafic donnée.
+
+    La graine fixe le trafic : deux configurations comparées avec la
+    même graine affrontent exactement la même situation, ce qui isole
+    l'effet du mécanisme testé du hasard de la génération.
+
+    Args:
+        graine (int): graine du générateur aléatoire.
+        conf (dict): mécanismes activés pour cet essai (préemption,
+            voie réservée, serrage, alerte anticipée).
+
+    Returns:
+        Un tuple (temps de traversée, temps à l'arrêt, collisions).
+    """
     from simulation.moteur import MoteurSimulation
     from models.usagers_concrets import Vehicule, Pieton
 
@@ -106,6 +119,14 @@ def essai(graine, conf):
 
 
 def lancer_etude(nb_situations=20):
+    """Compare les cinq configurations sur des situations de trafic identiques.
+
+    Args:
+        nb_situations (int): nombre de graines testées par configuration.
+
+    Returns:
+        Le tableau de résultats, une ligne par configuration.
+    """
     print(f"\n{'='*70}")
     print(f"  ÉTUDE COMPARATIVE — {nb_situations} situations de trafic")
     print(f"{'='*70}\n")
@@ -161,6 +182,7 @@ def lancer_etude(nb_situations=20):
 
 
 def exporter_csv(tableau):
+    """Écrit les résultats dans resultats_comparatifs.csv, à côté du script."""
     chemin = os.path.join(os.path.dirname(__file__), "resultats_comparatifs.csv")
     with open(chemin, "w", encoding="utf-8") as f:
         f.write("Configuration,Temps moyen (s),Temps a l'arret (s),Pire cas (s),Collisions\n")
@@ -170,6 +192,11 @@ def exporter_csv(tableau):
 
 
 def exporter_graphique(tableau):
+    """Génère un histogramme comparatif en PNG, si matplotlib est installé.
+
+    L'absence de matplotlib n'est pas une erreur : la bibliothèque est
+    optionnelle et seul le graphique est alors ignoré.
+    """
     try:
         import matplotlib
         matplotlib.use("Agg")

@@ -46,7 +46,15 @@ TYPES_USAGERS = ("vehicule_normal", "vehicule_autonome", "vehicule_urgence",
 
 
 class FenetrePrincipale(QMainWindow):
+    """Poste de supervision du carrefour : vue graphique et tableau de bord.
+
+    Toutes les données affichées arrivent du thread réseau par signaux
+    Qt : aucun widget n'est touché depuis ce thread, conformément à la
+    règle de thread-safety imposée par le projet.
+    """
+
     def __init__(self):
+        """Construit l'interface puis démarre le thread réseau."""
         super().__init__()
         self.setWindowTitle("Carrefour intelligent connecté — Poste de supervision")
         self.setStyleSheet(STYLE_FENETRE)
@@ -76,6 +84,11 @@ class FenetrePrincipale(QMainWindow):
     # ------------------------------------------------------------
 
     def _construire_panneau_lateral(self):
+        """Assemble le panneau de droite : statut, V2I, compteurs et boutons.
+
+        Returns:
+            Le widget prêt à être inséré dans la fenêtre.
+        """
         panneau = QWidget()
         panneau.setFixedWidth(360)
         layout = QVBoxLayout(panneau)
@@ -171,6 +184,7 @@ class FenetrePrincipale(QMainWindow):
 
     @staticmethod
     def _joli_nom(type_usager):
+        """Retourne le libellé affichable d'un type d'usager."""
         return {
             "vehicule_normal": "Véhicules",
             "vehicule_autonome": "Autonomes",
@@ -185,6 +199,11 @@ class FenetrePrincipale(QMainWindow):
 
     @pyqtSlot(dict)
     def _sur_etat_recu(self, etat):
+        """Slot Qt : rafraîchit la scène et le tableau de bord.
+
+        Args:
+            etat (dict): snapshot complet reçu de la passerelle.
+        """
         self.scene.maj_etat(etat)
 
         compteurs = {}
@@ -217,6 +236,7 @@ class FenetrePrincipale(QMainWindow):
 
     @staticmethod
     def _format_alertes(alertes):
+        """Met en forme en HTML la liste des alertes V2I en cours."""
         if not alertes:
             return "<span style='color:#64748B'>Aucune alerte</span>"
         lignes = []
@@ -233,6 +253,7 @@ class FenetrePrincipale(QMainWindow):
 
     @staticmethod
     def _format_temps(valeur):
+        """Affiche une durée en secondes, ou un tiret si elle est inconnue."""
         return f"{valeur:.1f} s" if valeur else "—"
 
     # ------------------------------------------------------------
@@ -240,6 +261,14 @@ class FenetrePrincipale(QMainWindow):
     # ------------------------------------------------------------
 
     def _envoyer(self, action, type_usager):
+        """Envoie une commande + / − au serveur via le thread réseau.
+
+        Args:
+            action (str): "ajouter" ou "supprimer".
+            type_usager (str): type d'usager concerné. Pour une urgence
+                ajoutée, le niveau de priorité choisi dans le menu est
+                joint à la commande.
+        """
         parametres = {}
         if type_usager == "vehicule_urgence" and action == "ajouter":
             parametres["priorite"] = self.choix_priorite.currentData()
@@ -248,6 +277,7 @@ class FenetrePrincipale(QMainWindow):
             self.label_info.setStyleSheet("color: #F87171; font-size: 11px;")
 
     def _activer_boutons(self, actif):
+        """Active ou grise les boutons selon l'état de la connexion."""
         for bouton in self.boutons_usagers:
             bouton.setEnabled(actif)
 
@@ -262,6 +292,12 @@ class FenetrePrincipale(QMainWindow):
 
     @pyqtSlot(bool, str)
     def _sur_statut_connexion(self, connecte, message):
+        """Slot Qt : reflète l'état de la connexion (voyant et boutons).
+
+        Args:
+            connecte (bool): True si la liaison est établie.
+            message (str): texte explicatif à afficher.
+        """
         self._activer_boutons(connecte)
         self.label_statut.setText(("🟢 " if connecte else "🔴 ") + message)
         self.label_statut.setStyleSheet(
@@ -274,5 +310,6 @@ class FenetrePrincipale(QMainWindow):
         )
 
     def closeEvent(self, event):
+        """Arrête proprement le thread réseau à la fermeture de la fenêtre."""
         self.thread_reseau.arreter()
         super().closeEvent(event)

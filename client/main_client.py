@@ -1,7 +1,8 @@
-"""Point d'entrée à lancer sur la VM Client.
+"""Point d'entrée du poste client (interface graphique PyQt6).
 
-Application graphique PyQt6 qui se connecte au serveur (VM Serveur)
-par socket et affiche la simulation en temps réel."""
+Application graphique qui se connecte à la passerelle (VM2) par socket
+et affiche la simulation en temps réel. Elle ne joint jamais le moteur
+(VM1) directement."""
 
 import sys
 import os
@@ -13,6 +14,7 @@ from client.fenetre_principale import FenetrePrincipale
 
 
 def main():
+    """Crée l'application Qt, affiche la fenêtre et lance la boucle d'événements."""
     app = QApplication(sys.argv)
     fenetre = FenetrePrincipale()
     fenetre.show()

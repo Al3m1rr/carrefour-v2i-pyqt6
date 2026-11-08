@@ -19,7 +19,16 @@ SANS_STYLO = QPen(Qt.PenStyle.NoPen)
 
 
 class SceneCarrefour(QGraphicsScene):
+    """Rendu 2D du carrefour vu de dessus (QGraphicsScene).
+
+    Le décor (chaussée, marquages, passages piétons) est dessiné une
+    seule fois à la construction ; seuls les éléments mobiles (usagers,
+    feux, panneaux, surlignage du couloir) sont rafraîchis à chaque état
+    reçu du serveur.
+    """
+
     def __init__(self, parent=None):
+        """Dessine le décor fixe et prépare les éléments dynamiques."""
         super().__init__(parent)
         self.setSceneRect(0, 0, config.LARGEUR_SCENE, config.HAUTEUR_SCENE)
         self.setBackgroundBrush(QBrush(QColor(config.COULEUR_HERBE)))
@@ -39,6 +48,7 @@ class SceneCarrefour(QGraphicsScene):
     # ============================================================
 
     def _dessiner_decor(self):
+        """Dessine le fond, les trottoirs et les deux chaussées."""
         cx, cy = config.CENTRE_X, config.CENTRE_Y
         demi = config.DEMI_CHAUSSEE
         L, H = config.LARGEUR_SCENE, config.HAUTEUR_SCENE
@@ -113,6 +123,7 @@ class SceneCarrefour(QGraphicsScene):
                     self.addRect(x, y, epaisseur, largeur_bande, SANS_STYLO, blanc)
 
     def _dessiner_lignes_arret(self):
+        """Trace la ligne d'arrêt blanche de chaque voie entrante."""
         cx, cy = config.CENTRE_X, config.CENTRE_Y
         la = config.LIGNE_ARRET
         o = config.OFFSET_VOIE
@@ -266,6 +277,11 @@ class SceneCarrefour(QGraphicsScene):
                 self._panneaux[role][branche] = items
 
     def _maj_panneaux(self, sens_interdit):
+        """Allume les panneaux « sens interdit sauf urgences » concernés.
+
+        Args:
+            sens_interdit (dict): branches fermées, en entrée et en sortie.
+        """
         if isinstance(sens_interdit, list):   # compatibilité ancien format
             sens_interdit = {"entree": [], "sortie": sens_interdit}
         for role, par_branche in self._panneaux.items():
@@ -279,6 +295,7 @@ class SceneCarrefour(QGraphicsScene):
     # ============================================================
 
     def _maj_couloir(self, v2i):
+        """Surligne en rouge la voie réservée pendant un couloir actif."""
         for item in self._surlignage_couloir:
             self.removeItem(item)
         self._surlignage_couloir = []
@@ -338,6 +355,12 @@ class SceneCarrefour(QGraphicsScene):
     # ============================================================
 
     def maj_etat(self, etat):
+        """Rafraîchit toute la scène à partir d'un état reçu du serveur.
+
+        Args:
+            etat (dict): snapshot contenant les feux, la centrale V2I et
+                la liste des usagers visibles.
+        """
         self._maj_feux(etat.get("feu", {}))
         v2i = etat.get("v2i", {})
         self._maj_panneaux(v2i.get("sens_interdit", {}))
@@ -391,6 +414,16 @@ class SceneCarrefour(QGraphicsScene):
             self._bandeaux_alertes += [cadre, texte]
 
     def _maj_usagers(self, usagers, tick):
+        """Crée, déplace et supprime les formes représentant les usagers.
+
+        Les items sont réutilisés d'un tick à l'autre et indexés par
+        identifiant : les recréer à chaque image ferait scintiller
+        l'affichage et coûterait cher.
+
+        Args:
+            usagers (list): usagers visibles dans l'état reçu.
+            tick (int): tick courant, utilisé pour les clignotements.
+        """
         vus = set()
         for u in usagers:
             vus.add(u["id"])
@@ -413,6 +446,14 @@ class SceneCarrefour(QGraphicsScene):
             self.removeItem(self._items_usagers.pop(id_disparu))
 
     def _creer_item(self, u):
+        """Crée la forme graphique correspondant à un usager.
+
+        Args:
+            u (dict): description de l'usager (type, position, angle).
+
+        Returns:
+            L'item QGraphics ajouté à la scène.
+        """
         type_usager = u["type"]
         couleur = QColor(config.COULEURS_USAGER.get(type_usager, "#FFFFFF"))
 
@@ -471,6 +512,7 @@ class SceneCarrefour(QGraphicsScene):
         return item
 
     def _faire_clignoter(self, item, tick):
+        """Fait clignoter le gyrophare d'un véhicule d'urgence."""
         gyrophare = item.data(0)
         if gyrophare is None:
             return
