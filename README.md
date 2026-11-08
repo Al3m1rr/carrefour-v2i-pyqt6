@@ -46,10 +46,10 @@ démarrage.
 > **Pour le déploiement réel sur les deux VM Debian**, qui est
 > l'architecture du projet :
 >
-> - 📘 **[Guide complet, pas à pas](deploiement/GUIDE_COMPLET.md)** —
->   depuis un PC nu : installer VirtualBox, créer les deux VM, installer
->   Debian, configurer le réseau, déployer et lancer. Aucune
->   connaissance préalable requise.
+> - 📘 **[Guide pas à pas — objectif 30 minutes](deploiement/GUIDE_COMPLET.md)**
+>   — du téléchargement de l'ISO Debian à la simulation à l'écran :
+>   création des VM, installation écran par écran, réseau, déploiement
+>   et vérification. Aucune connaissance de Linux requise.
 > - ⚡ [Guide condensé](deploiement/README.md) — si vous avez déjà deux
 >   VM Debian et l'habitude de Linux.
 

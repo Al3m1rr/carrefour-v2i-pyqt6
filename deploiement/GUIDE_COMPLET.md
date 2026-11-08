@@ -1,238 +1,200 @@
-# Guide complet — de zéro à la simulation qui tourne
+# Guide de déploiement pas à pas — objectif 30 minutes
 
-Ce guide ne suppose aucune connaissance préalable. Il part d'un PC nu et
-va jusqu'à la simulation du carrefour affichée à l'écran, en passant par
-l'installation de VirtualBox et de deux machines virtuelles Debian.
+Ce guide part de **VirtualBox déjà installé** et va jusqu'à la
+simulation du carrefour affichée à l'écran. Il ne suppose aucune
+connaissance de Linux.
 
-**Vous avez déjà deux VM Debian 13 prêtes ?** Sautez directement à la
-[partie 6](#partie-6--configurer-le-réseau-entre-les-deux-vm).
+**Vous avez déjà deux VM Debian 13 prêtes ?** Sautez à
+l'[étape 3](#étape-3--relier-les-deux-vm-5-min).
 
-**Vous voulez juste voir le projet tourner, sans VM ?** Une version en
-5 minutes existe dans le [README principal](../README.md).
+**Vous voulez juste voir le projet tourner, sans VM ?** Version en
+5 minutes dans le [README principal](../README.md).
 
 ---
 
-## Ce dont vous avez besoin
+## Le chronométrage
 
-| | Minimum | Confortable |
+| Étape | Durée | Peut se faire en parallèle |
 |---|---|---|
-| Mémoire vive (RAM) | 8 Go | 16 Go |
-| Espace disque libre | 50 Go | 60 Go |
-| Connexion Internet | oui, pour les téléchargements | |
+| 1. Télécharger l'ISO Debian | 2–5 min | pendant la lecture du guide |
+| 2. Créer et installer les deux VM | **15–20 min** | ✅ **les deux en même temps** |
+| 3. Relier les deux VM | 5 min | |
+| 4. Déployer le projet | 5 min | ✅ les deux en même temps |
+| 5. Lancer et vérifier | 3 min | |
+| | **≈ 30 min** | |
 
-Durée totale : **1 h à 1 h 30**, dont beaucoup d'attente pendant les
-installations. Si vous avez déjà les VM, comptez 20 à 30 minutes.
+> **La clé pour tenir les 30 minutes** : lancez l'installation des
+> **deux VM simultanément** (étape 2.4). Les faire l'une après l'autre
+> double le temps total. Pendant qu'elles installent, vous n'avez rien
+> à faire.
 
----
-
-## Partie 1 — Installer VirtualBox
-
-VirtualBox est le logiciel qui fait tourner des machines virtuelles :
-des ordinateurs simulés à l'intérieur du vôtre.
-
-1. Rendez-vous sur **https://www.virtualbox.org/wiki/Downloads**
-2. Cliquez sur **Windows hosts** (ou le système de votre PC). Un fichier
-   d'environ 110 Mo se télécharge.
-3. Lancez le fichier téléchargé et cliquez sur **Next** à chaque étape,
-   sans rien modifier, puis **Install**.
-4. Windows affichera un avertissement sur l'installation de pilotes
-   réseau : acceptez, ils sont nécessaires pour que les VM communiquent.
-5. À la fin, VirtualBox s'ouvre. Vous pouvez le fermer pour l'instant.
+**Prérequis** : VirtualBox 7.x installé, 6 Go de RAM libres, 50 Go de
+disque, une connexion Internet.
 
 ---
 
-## Partie 2 — Télécharger Debian 13
+## Étape 1 — Télécharger Debian 13 (2–5 min)
 
-Debian est le système d'exploitation (comme Windows, mais Linux) qui
-tournera dans les machines virtuelles.
+Un seul fichier suffit pour les deux VM.
 
-1. Rendez-vous sur **https://www.debian.org/download**
-2. Téléchargez l'image **netinst** pour **amd64**. Lien direct :
-   https://cdimage.debian.org/debian-cd/current/amd64/iso-cd/
-3. Prenez le fichier nommé `debian-13.x.x-amd64-netinst.iso`
-   (environ 750 Mo). Les chiffres après le 13 changent avec les mises à
-   jour, prenez simplement la version proposée.
-4. Notez où le fichier a été enregistré, en général dans
-   `C:\Users\<vous>\Downloads`.
+👉 **https://cdimage.debian.org/debian-cd/current/amd64/iso-cd/**
 
-> L'image *netinst* est volontairement légère : elle télécharge le reste
-> pendant l'installation. C'est pour cela qu'une connexion Internet est
-> nécessaire à l'étape suivante.
+Prenez le fichier `debian-13.x.x-amd64-netinst.iso` (environ 750 Mo).
+Les chiffres après le 13 changent avec les mises à jour : prenez celui
+qui est proposé.
+
+Lancez le téléchargement maintenant et poursuivez votre lecture pendant
+ce temps.
 
 ---
 
-## Partie 3 — Créer la première machine virtuelle
+## Étape 2 — Créer et installer les deux VM (15–20 min)
 
-1. Ouvrez **VirtualBox** et cliquez sur **Nouvelle** (icône étoile bleue).
-2. Remplissez :
-   - **Nom** : `VM1-Simulation`
-   - **Dossier** : laissez le défaut
-   - **Image ISO** : cliquez sur la flèche → *Autre* → sélectionnez le
-     fichier `.iso` téléchargé à la partie 2
-   - **Ne cochez pas** « Skip Unattended Installation » si la case
-     apparaît : décochez-la au contraire, nous voulons faire
-     l'installation nous-mêmes.
+### 2.1 Créer la première VM
 
-   > Selon la version de VirtualBox, une case **« Installation
-   > automatique »** peut apparaître. **Désactivez-la.** Elle provoque
-   > des installations incomplètes.
+Dans VirtualBox, cliquez sur **Nouvelle**.
 
-3. Cliquez sur **Suivant**.
-4. **Matériel** :
-   - **Mémoire vive** : `2048` Mo
-   - **Processeurs** : `2`
-5. **Disque dur** : `20` Go, laissez *Alloué dynamiquement* coché.
-6. Cliquez sur **Suivant**, vérifiez le récapitulatif, puis **Terminer**.
-
-La VM apparaît dans la liste à gauche. Elle est créée mais vide.
-
----
-
-## Partie 4 — Installer Debian sur la VM1
-
-Sélectionnez `VM1-Simulation` et cliquez sur **Démarrer**. La VM démarre
-sur l'image Debian.
-
-> **Votre souris est « capturée » par la VM ?** Appuyez sur la touche
-> **Ctrl de droite** pour la libérer.
-
-Déroulez l'installateur :
-
-| Écran | Ce qu'il faut choisir |
+| Champ | Valeur |
 |---|---|
-| Menu de démarrage | **Install** (version texte, la plus rapide) |
+| Nom | `VM1-Simulation` |
+| Image ISO | le fichier `.iso` téléchargé |
+| Installation automatique | **à décocher** si la case apparaît |
+| Mémoire vive | `2048` Mo |
+| Processeurs | `2` |
+| Disque dur | `20` Go, alloué dynamiquement |
+
+Cliquez sur **Terminer**.
+
+### 2.2 Lui ajouter la carte réseau privée, tout de suite
+
+Autant le faire maintenant plutôt que d'y revenir. VM éteinte :
+**Configuration** → **Réseau** :
+
+- **Adaptateur 1** : laissez **NAT** (accès Internet)
+- **Adaptateur 2** : cochez **Activer la carte réseau**, puis
+  *Attaché à* → **Réseau privé hôte**
+
+**OK**.
+
+### 2.3 Créer la seconde VM
+
+Refaites 2.1 et 2.2 à l'identique, en nommant la VM
+`VM2-Passerelle`. Pour l'adaptateur 2, choisissez **le même nom de
+réseau** que pour la VM1 — c'est ce qui leur permettra de se parler.
+
+### 2.4 Lancer les deux installations **en même temps**
+
+Démarrez la VM1, puis **sans attendre**, démarrez la VM2. Les deux
+installateurs tournent en parallèle. C'est ce qui permet de tenir dans
+les 30 minutes.
+
+> **Souris bloquée dans une VM ?** Touche **Ctrl de droite** pour la
+> libérer. Pour passer d'une VM à l'autre, utilisez la barre des tâches.
+
+### 2.5 Dérouler l'installateur, sur chaque VM
+
+| Écran | Choix |
+|---|---|
+| Menu de démarrage | **Install** (texte, le plus rapide) |
 | Language | **French** |
 | Pays | **France** |
-| Disposition du clavier | **Français** |
-| Nom de machine | `vm1` |
+| Clavier | **Français** |
+| Nom de machine | `vm1` — et `vm2` sur l'autre VM |
 | Domaine | laissez vide |
-| **Mot de passe root** | **LAISSEZ VIDE**, puis Continuer ⚠ |
-| Nom complet | ce que vous voulez, ex. `Carrefour` |
+| **Mot de passe root** | **LAISSEZ VIDE** puis Continuer ⚠ |
+| Nom complet | `Carrefour` |
 | Identifiant | `carrefour` |
-| Mot de passe | choisissez-en un, **notez-le** |
+| Mot de passe | le même sur les deux, **notez-le** |
 | Fuseau horaire | votre région |
-| Partitionnement | **Assisté - utiliser un disque entier** |
+| Partitionnement | **Assisté – utiliser un disque entier** |
 | Disque | le seul proposé |
 | Schéma | **Tout dans une seule partition** |
-| Confirmer | **Terminer le partitionnement**, puis **Oui** |
+| Confirmer | **Terminer le partitionnement** puis **Oui** |
 | Analyser un autre support | **Non** |
-| Miroir Debian | **France**, puis `deb.debian.org` |
-| Mandataire (proxy) | laissez vide |
+| Miroir | **France** puis `deb.debian.org` |
+| Proxy | laissez vide |
 | Participer à l'étude | **Non** |
 
-**⚠ L'écran le plus important — « Sélection des logiciels »** :
+**⚠ Écran « Sélection des logiciels » — le plus important**
 
-Utilisez la **barre d'espace** pour cocher et décocher :
+Avec la **barre d'espace** :
 
-- ❌ **Décochez** `Environnement de bureau Debian` et `GNOME`
-- ✅ **Cochez** `Serveur SSH`
-- ✅ **Laissez coché** `Utilitaires usuels du système`
+- ❌ **décochez** `Environnement de bureau Debian` et `GNOME`
+- ✅ **cochez** `Serveur SSH`
+- ✅ laissez `Utilitaires usuels du système`
 
-Puis Continuer. Sans interface graphique, l'installation est bien plus
-rapide et la VM consomme beaucoup moins de mémoire.
+Sans interface graphique, l'installation est deux fois plus rapide et
+la VM consomme bien moins de mémoire.
 
 | Écran | Choix |
 |---|---|
 | Installer GRUB | **Oui** |
-| Où installer GRUB | le disque proposé, ex. `/dev/sda` |
-| Fin de l'installation | **Continuer** — la VM redémarre |
+| Où l'installer | le disque proposé (`/dev/sda`) |
+| Fin | **Continuer**, la VM redémarre |
 
 ### Pourquoi laisser le mot de passe root vide ?
 
-C'est le point qui évite le plus de problèmes. Quand le mot de passe
-root est vide, Debian installe automatiquement `sudo` et y ajoute votre
-utilisateur. Si vous en définissez un, `sudo` n'est pas installé du
-tout et il faudra le faire à la main plus tard.
+C'est le conseil qui évite le plus de problèmes. Mot de passe root vide
+= Debian installe `sudo` et y ajoute votre utilisateur automatiquement.
+Si vous en définissez un, **`sudo` n'est pas installé du tout** et il
+faudra le rattraper à la main.
 
 ---
 
-## Partie 5 — Créer la seconde machine virtuelle
+## Étape 3 — Relier les deux VM (5 min)
 
-Refaites **exactement** les parties 3 et 4, avec deux changements :
+Sans cette étape, les deux VM ne peuvent pas se parler et le projet ne
+fonctionne pas. C'est la cause d'échec la plus fréquente.
 
-- **Nom de la VM** : `VM2-Passerelle`
-- **Nom de machine** (dans l'installateur) : `vm2`
-
-Tout le reste est identique, y compris l'identifiant `carrefour`.
-
-> Vous pouvez aussi faire un clic droit sur la VM1 → **Cloner**, mais
-> pensez alors à changer le nom de machine à l'intérieur, sinon les deux
-> VM s'appelleront `vm1` et vous les confondrez.
-
----
-
-## Partie 6 — Configurer le réseau entre les deux VM
-
-**C'est l'étape la plus importante du guide.** Sans elle, les deux VM ne
-peuvent pas se parler et le projet ne peut pas fonctionner.
-
-Par défaut, une VM n'a qu'une carte **NAT** : elle accède à Internet,
-mais elle est **invisible** pour les autres VM et pour votre PC. Il faut
-donc lui ajouter une seconde carte.
-
-Pour **chacune des deux VM**, machine **éteinte** :
-
-1. Sélectionnez la VM → **Configuration** → **Réseau**
-2. Onglet **Adaptateur 1** : laissez **NAT** (c'est l'accès Internet)
-3. Onglet **Adaptateur 2** :
-   - cochez **Activer la carte réseau**
-   - *Attaché à* : **Réseau privé hôte**
-   - *Nom* : choisissez le même pour les deux VM, en général
-     `VirtualBox Host-Only Ethernet Adapter`
-4. **OK**
-
-Démarrez les deux VM, connectez-vous, et sur chacune tapez :
+Connectez-vous sur chaque VM (identifiant `carrefour`), puis :
 
 ```bash
 ip -brief addr
 ```
 
-Vous devez voir **deux** cartes en plus de `lo`, par exemple :
+Vous devez voir **deux** cartes en plus de `lo` :
 
 ```
-enp0s3   UP   10.0.2.15/24          <- NAT, Internet
-enp0s8   UP   192.168.56.10/24      <- réseau privé, entre VM
+enp0s3   UP   10.0.2.15/24         <- NAT, Internet
+enp0s8   UP   192.168.56.10/24     <- réseau privé, entre les VM
 ```
 
-**Notez l'adresse `192.168.56.x` de chaque VM**, vous en aurez besoin.
+**Notez l'adresse `192.168.56.x` de chaque VM.**
 
-### Si la seconde carte est `DOWN` ou sans adresse
-
-C'est que le serveur DHCP du réseau privé n'est pas actif. Deux options.
-
-**Option 1 — activer le DHCP** (une seule fois, sur votre PC) :
-VirtualBox → menu **Fichier** → **Outils** → **Gestionnaire de réseau
-hôte** → sélectionnez l'interface → onglet **Serveur DHCP** → cochez
-**Activer**. Redémarrez les VM.
-
-**Option 2 — fixer les adresses vous-même**, à l'étape 7 : ajoutez
-`IP_LOCALE=...` devant la commande de provisionnement, comme indiqué
-plus bas.
-
-### Vérifier que les VM se voient
-
-Depuis la **VM2**, remplacez par l'adresse de votre VM1 :
+Vérifiez qu'elles se voient — depuis la **VM2**, avec l'adresse de
+votre VM1 :
 
 ```bash
 ping -c 3 192.168.56.10
 ```
 
-Si vous obtenez des réponses, tout est bon. Sinon, reprenez cette
-partie 6 : les deux VM ne sont pas sur le même réseau privé.
+Des réponses = tout va bien, passez à l'étape 4.
+
+### Si `enp0s8` est absente, `DOWN` ou sans adresse
+
+**Absente** : l'adaptateur 2 n'a pas été ajouté. Éteignez la VM et
+reprenez l'étape 2.2.
+
+**Présente mais sans adresse** : le serveur DHCP du réseau privé est
+inactif. Soit vous l'activez une fois pour toutes dans VirtualBox
+(**Fichier** → **Outils** → **Gestionnaire de réseau hôte** →
+onglet **Serveur DHCP** → **Activer**, puis redémarrez les VM), soit
+vous fixez les adresses à l'étape 4 avec `IP_LOCALE`.
+
+**Le ping ne passe pas** : les deux VM ne sont pas sur le même réseau
+privé. Vérifiez qu'elles ont bien le **même nom de réseau** dans
+l'adaptateur 2.
 
 ---
 
-## Partie 7 — Déployer le projet sur les VM
+## Étape 4 — Déployer le projet (5 min)
 
-À faire **sur les deux VM**.
+À faire **sur les deux VM**, elles peuvent travailler en parallèle.
 
-### 7.1 Installer git et récupérer le projet
+### 4.1 Récupérer le projet
 
 ```bash
-sudo apt update
-```
-```bash
-sudo apt install -y git
+sudo apt update && sudo apt install -y git
 ```
 ```bash
 git clone https://github.com/Al3m1rr/carrefour-v2i-pyqt6.git
@@ -241,25 +203,15 @@ git clone https://github.com/Al3m1rr/carrefour-v2i-pyqt6.git
 cd carrefour-v2i-pyqt6
 ```
 
-> **`sudo : commande introuvable` ?** Votre installation Debian avait un
-> mot de passe root. Tapez `su -`, entrez le mot de passe root, puis :
+> **`sudo : commande introuvable` ?** Vous aviez défini un mot de passe
+> root. Tapez `su -`, puis
 > `apt update && apt install -y sudo git`, puis
 > `usermod -aG sudo carrefour`, puis `exit`. Déconnectez-vous et
-> reconnectez-vous pour que ce soit pris en compte.
+> reconnectez-vous.
 
-### 7.2 Vérifier que tout est prêt
+### 4.2 Provisionner
 
-```bash
-./deploiement/verifier.sh
-```
-
-Ce script ne modifie rien. Il signale ce qui manque. Corrigez les lignes
-`[ A VOIR ]` avant de continuer.
-
-### 7.3 Provisionner chaque VM
-
-Cette étape installe MariaDB, crée la base propre à chaque rôle et
-prépare l'environnement Python. Comptez 3 à 5 minutes par VM.
+Installe MariaDB, crée la base du rôle et prépare Python. 3 à 5 minutes.
 
 Sur la **VM1** :
 
@@ -267,26 +219,33 @@ Sur la **VM1** :
 sudo bash deploiement/installer_vm.sh moteur
 ```
 
-Sur la **VM2**, en indiquant l'adresse privée de la VM1 :
+Sur la **VM2**, avec l'adresse privée de la VM1 :
 
 ```bash
 sudo IP_MOTEUR=192.168.56.10 bash deploiement/installer_vm.sh passerelle
 ```
 
-> Si vos cartes privées n'avaient pas d'adresse (cas de l'option 2 en
-> partie 6), ajoutez `IP_LOCALE` :
+> Si vos cartes privées n'avaient pas d'adresse automatique, ajoutez
+> `IP_LOCALE` :
 > ```bash
 > sudo IP_LOCALE=192.168.56.10 bash deploiement/installer_vm.sh moteur
 > sudo IP_LOCALE=192.168.56.11 IP_MOTEUR=192.168.56.10 bash deploiement/installer_vm.sh passerelle
 > ```
 
+En cas de doute, un script vérifie l'état de la machine sans rien
+modifier :
+
+```bash
+./deploiement/verifier.sh 192.168.56.10
+```
+
 ---
 
-## Partie 8 — Lancer la simulation
+## Étape 5 — Lancer et vérifier (3 min)
 
-L'ordre compte : la VM1 d'abord, puis la VM2, puis l'interface.
+L'ordre compte : VM1, puis VM2, puis l'interface.
 
-### 8.1 Sur la VM1 — le moteur
+### 5.1 VM1 — le moteur
 
 ```bash
 cd carrefour-v2i-pyqt6 && ./deploiement/demarrer.sh moteur
@@ -300,11 +259,11 @@ Attendu :
 Simulation demarree (30 ticks/s).
 ```
 
-**Laissez cette fenêtre ouverte.** Le moteur occupe ce terminal : pour
-taper d'autres commandes sur cette VM, ouvrez un second écran avec
-**Alt + F2**, ou connectez-vous en SSH.
+**Laissez la fenêtre ouverte** : le moteur occupe ce terminal. Pour
+taper autre chose sur cette VM, ouvrez un second écran avec
+**Alt + F2**.
 
-### 8.2 Sur la VM2 — la passerelle
+### 5.2 VM2 — la passerelle
 
 ```bash
 cd carrefour-v2i-pyqt6 && ./deploiement/demarrer.sh passerelle
@@ -316,10 +275,10 @@ La ligne qui prouve que les deux VM communiquent :
 [Lien moteur] Connecte au moteur 192.168.56.10:5051
 ```
 
-### 8.3 Sur votre PC — l'interface graphique
+### 5.3 Votre PC — l'interface graphique
 
-L'interface ne tourne pas dans les VM (elles n'ont pas d'écran), mais
-sur votre PC. Ouvrez un terminal **sur votre PC**, pas dans une VM :
+L'interface ne tourne pas dans les VM, qui n'ont pas d'écran, mais sur
+votre PC. Dans un terminal **de votre PC** :
 
 ```bash
 git clone https://github.com/Al3m1rr/carrefour-v2i-pyqt6.git
@@ -343,13 +302,11 @@ Linux ou macOS :
 source venv/bin/activate
 ```
 
-Installez les dépendances :
-
 ```bash
 pip install -r requirements.txt
 ```
 
-Indiquez l'adresse de la VM2 et lancez — Windows :
+Puis, avec l'adresse de votre VM2 — Windows :
 
 ```bash
 set CARREFOUR_SOCKET_SERVEUR_HOTE=192.168.56.11
@@ -367,70 +324,61 @@ export CARREFOUR_SOCKET_SERVEUR_HOTE=192.168.56.11
 python3 client/main_client.py
 ```
 
-**La fenêtre du carrefour s'ouvre.** En haut à droite doit s'afficher :
+**La fenêtre du carrefour s'ouvre**, avec en haut à droite :
 
 ```
 🟢 Connecté au serveur 192.168.56.11:5050
 ```
 
-Vous voyez les véhicules circuler, les feux changer, et les usagers
-s'arrêter aux passages piétons.
+### 5.4 Vérifier le mécanisme central
 
----
+Dans l'interface, cliquez sur le **+** de la ligne **Urgences**.
+Observez :
 
-## Partie 9 — Vérifier que tout fonctionne vraiment
-
-### Déclencher une urgence
-
-Dans l'interface, à droite, cliquez sur le **+** de la ligne
-**Urgences**. Observez :
-
-- l'axe du véhicule d'urgence passe en **rouge** : c'est la voie réservée
+- l'axe du véhicule d'urgence passe en **rouge** : la voie réservée
 - deux panneaux **SAUF URGENCES** s'allument à ses entrées
 - un **compte à rebours** annonce son arrivée
-- les véhicules ordinaires sont déviés et la voie se vide devant elle
+- les véhicules ordinaires sont déviés, la voie se vide devant elle
 
-C'est le mécanisme central du projet.
+### 5.5 Vérifier les bases de données
 
-### Vérifier les bases de données
-
-Sur la **VM1**, le résultat principal — les urgences doivent afficher un
-temps de traversée nettement inférieur :
+Sur la **VM1**, le résultat principal du projet :
 
 ```bash
 sudo mariadb carrefour_moteur_db -e "SELECT type_usager, COUNT(*) AS nb, ROUND(AVG(temps_parcours),2) AS temps_moyen_s FROM usager WHERE temps_parcours IS NOT NULL GROUP BY type_usager ORDER BY temps_moyen_s;"
 ```
 
-Sur la **VM2**, le bilan des sessions :
+Les véhicules d'urgence doivent apparaître en tête, avec un temps de
+traversée nettement inférieur aux véhicules ordinaires.
+
+Sur la **VM2** :
 
 ```bash
 sudo mariadb carrefour_stats_db -e "SELECT * FROM session_simulation;"
 ```
 
-### Vérifier que les données sont bien réparties
-
-Sur la VM1 :
+Et pour constater que les données sont bien **réparties** et non
+centralisées, sur chaque VM :
 
 ```bash
 sudo mariadb -e "SHOW DATABASES;"
 ```
 
-`carrefour_moteur_db` apparaît, mais **pas** `carrefour_stats_db` — et
-l'inverse sur la VM2. C'est la preuve que les données ne sont pas
-centralisées sur une seule machine.
+La VM1 a `carrefour_moteur_db` mais pas `carrefour_stats_db`, et
+inversement.
 
 ---
 
-## Partie 10 — Tout arrêter proprement
+## Tout arrêter proprement
 
 1. Fermez la fenêtre de l'interface sur votre PC.
-2. Sur la **VM2** : **Ctrl + C**.
-   Vous devez voir `[DB:passerelle] Bilan de session enregistre.`
-   **Cette étape écrit le bilan en base**, ne la sautez pas.
-3. Sur la **VM1** : **Ctrl + C**. Elle affiche son résumé de simulation.
+2. **VM2** : **Ctrl + C**. Vous devez voir
+   `[DB:passerelle] Bilan de session enregistre.`
+   C'est cette étape qui écrit le bilan en base, ne la sautez pas.
+3. **VM1** : **Ctrl + C**.
 4. Sur chaque VM : `sudo poweroff`
 
-Pour relancer plus tard, reprenez directement à la **partie 8**.
+Pour relancer plus tard, reprenez directement à l'**étape 5**.
 
 ---
 
@@ -438,17 +386,17 @@ Pour relancer plus tard, reprenez directement à la **partie 8**.
 
 | Ce que vous voyez | Cause et solution |
 |---|---|
-| L'interface affiche « Mode dégradé » | La passerelle n'est pas lancée sur la VM2, ou l'adresse dans `CARREFOUR_SOCKET_SERVEUR_HOTE` est fausse |
-| La VM2 répète « VM1 injoignable » | Le moteur n'est pas lancé sur la VM1, ou `IP_MOTEUR` est fausse. Relancez l'étape 7.3 avec la bonne adresse |
-| `ping` entre les VM ne répond pas | Carte réseau privée manquante ou différente entre les deux VM. Reprenez la partie 6 |
-| `sudo : commande introuvable` | Mot de passe root défini à l'installation. Voir l'encadré en 7.1 |
-| `pip install` échoue | Python trop ancien. Il faut **3.11 ou plus récent** : `python3 --version` |
-| Ce que je tape dans la VM ne fait rien | Un service tourne dans ce terminal. Ouvrez un second écran avec **Alt + F2** |
-| `demarrer.sh: command not found` | Vous n'êtes pas dans le bon dossier : `cd carrefour-v2i-pyqt6` |
-| La souris reste bloquée dans la VM | Appuyez sur la touche **Ctrl de droite** |
-| « base désactivée » au démarrage | MariaDB absent ou arrêté. Sans gravité : la simulation tourne, mais n'enregistre rien |
+| L'interface affiche « Mode dégradé » | La passerelle n'est pas lancée sur la VM2, ou mauvaise adresse dans `CARREFOUR_SOCKET_SERVEUR_HOTE` |
+| La VM2 répète « VM1 injoignable » | Le moteur n'est pas lancé, ou `IP_MOTEUR` est fausse. Relancez l'étape 4.2 |
+| Le `ping` entre les VM ne passe pas | Carte réseau privée absente ou différente entre les deux. Reprenez l'étape 3 |
+| `sudo : commande introuvable` | Mot de passe root défini à l'installation. Voir l'encadré en 4.1 |
+| `pip install` échoue | Python trop ancien, il faut **3.11+** : `python3 --version` |
+| Ce que je tape ne fait rien | Un service occupe le terminal. Second écran avec **Alt + F2** |
+| `demarrer.sh: command not found` | Mauvais dossier : `cd carrefour-v2i-pyqt6` |
+| La souris reste bloquée | Touche **Ctrl de droite** |
+| « base désactivée » au démarrage | MariaDB absent ou arrêté. La simulation tourne, mais n'enregistre rien |
 
-Un script fait ces vérifications pour vous, sur chaque VM :
+Sur chaque VM, ce script diagnostique sans rien modifier :
 
 ```bash
 ./deploiement/verifier.sh 192.168.56.10
