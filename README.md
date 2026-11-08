@@ -44,10 +44,14 @@ absence la simulation tourne sans enregistrement et le signale au
 démarrage.
 
 > **Pour le déploiement réel sur les deux VM Debian**, qui est
-> l'architecture du projet, suivez
-> [deploiement/README.md](deploiement/README.md) — création des VM
-> scriptée, puis provisionnement automatisé de chacune. Comptez 30 à
-> 45 minutes.
+> l'architecture du projet :
+>
+> - 📘 **[Guide complet, pas à pas](deploiement/GUIDE_COMPLET.md)** —
+>   depuis un PC nu : installer VirtualBox, créer les deux VM, installer
+>   Debian, configurer le réseau, déployer et lancer. Aucune
+>   connaissance préalable requise.
+> - ⚡ [Guide condensé](deploiement/README.md) — si vous avez déjà deux
+>   VM Debian et l'habitude de Linux.
 
 ---
 

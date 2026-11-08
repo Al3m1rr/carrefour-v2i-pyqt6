@@ -1,5 +1,12 @@
 # Déploiement du projet
 
+> 📘 **Vous débutez avec VirtualBox ou Linux ?** Prenez plutôt le
+> **[guide complet pas à pas](GUIDE_COMPLET.md)** : il part d'un PC nu,
+> avec les liens de téléchargement, chaque écran de l'installateur
+> Debian et chaque commande expliquée.
+>
+> La page ci-dessous est la version condensée, pour aller vite.
+
 Trois parcours, selon ce dont vous disposez.
 
 | Vous avez… | Allez à |
