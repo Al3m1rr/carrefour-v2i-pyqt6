@@ -1,0 +1,12 @@
+# Fins de ligne imposees, quelle que soit la configuration Git de la
+# personne qui clone. Sans cela, un script .sh recupere sous Windows
+# puis execute sous Linux echoue avec "bad interpreter: /bin/bash^M".
+* text=auto eol=lf
+
+# Ces fichiers ne tournent que sous Windows : ils gardent des CRLF.
+*.bat text eol=crlf
+*.ps1 text eol=crlf
+
+# Fichiers binaires : aucune conversion.
+*.png binary
+*.iso binary
