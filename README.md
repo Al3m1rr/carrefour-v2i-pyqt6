@@ -14,6 +14,43 @@ Le système est **réparti sur deux machines virtuelles Debian 13** : la
 VM1 héberge le moteur de simulation et sa base, la VM2 la passerelle
 réseau et la sienne (voir *Architecture répartie* plus bas).
 
+---
+
+## ▶ Démarrage rapide (5 minutes, sans VM)
+
+Pour voir le projet fonctionner tout de suite, sur une seule machine.
+Les trois rôles tournent en local et dialoguent par sockets, exactement
+comme ils le feraient à travers le réseau.
+
+**Prérequis : Python 3.11 ou plus récent** (`python3 --version`). Les
+versions des dépendances sont figées, comme l'exige la consigne, et ne
+s'installeront pas sur une version antérieure.
+
+```bash
+git clone https://github.com/Al3m1rr/carrefour-v2i-pyqt6.git
+cd carrefour-v2i-pyqt6
+python3 -m venv venv
+source venv/bin/activate          # Windows : venv\Scripts\activate
+pip install -r requirements.txt
+```
+
+Puis lancez les trois rôles d'un coup :
+
+- **Windows** : double-cliquez sur `LANCER_TOUT.bat`
+- **Linux / macOS** : `./lancer_local.sh`
+
+MariaDB n'est **pas nécessaire** pour cette démonstration : en son
+absence la simulation tourne sans enregistrement et le signale au
+démarrage.
+
+> **Pour le déploiement réel sur les deux VM Debian**, qui est
+> l'architecture du projet, suivez
+> [deploiement/README.md](deploiement/README.md) — création des VM
+> scriptée, puis provisionnement automatisé de chacune. Comptez 30 à
+> 45 minutes.
+
+---
+
 ## Le principe implémenté : la voie réservée aux secours
 
 1. Un véhicule d'urgence émet une **alerte V2I** en approchant du carrefour.

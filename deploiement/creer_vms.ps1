@@ -52,8 +52,14 @@ if (-not (Test-Path $isoPath)) {
 }
 
 # --- 2. Reseau prive hote --------------------------------------------
-# Les deux VM ont besoin d'un reseau prive pour se parler. On reutilise
-# celui qui existe, sinon on en cree un.
+# Les deux VM ont besoin d'un reseau prive pour se parler, et le PC hote
+# doit etre sur le meme sous-reseau pour que le client PyQt6 joigne la
+# passerelle.
+#
+# Important : on FORCE l'interface en 192.168.56.1/24. Sans cela, un
+# poste dont l'interface host-only est deja en 192.168.57.x se
+# retrouverait avec des VM configurees en 192.168.56.x par
+# installer_vm.sh : elles ne verraient ni l'hote ni l'autre VM.
 $hostonly = (& $vbox list hostonlyifs | Select-String '^Name:' | Select-Object -First 1)
 if ($hostonly) {
     $nomReseau = ($hostonly -split ':', 2)[1].Trim()
@@ -62,8 +68,9 @@ if ($hostonly) {
     Write-Host "Creation d'un reseau prive hote..."
     & $vbox hostonlyif create
     $nomReseau = ((& $vbox list hostonlyifs | Select-String '^Name:' | Select-Object -First 1) -split ':', 2)[1].Trim()
-    & $vbox hostonlyif ipconfig $nomReseau --ip 192.168.56.1 --netmask 255.255.255.0
 }
+& $vbox hostonlyif ipconfig $nomReseau --ip 192.168.56.1 --netmask 255.255.255.0
+Write-Host "Interface $nomReseau fixee a 192.168.56.1/24"
 
 # --- 3. Creation et installation des VM ------------------------------
 $dossierVM = ((& $vbox list systemproperties | Select-String 'Default machine folder') -split ':', 2)[1].Trim()

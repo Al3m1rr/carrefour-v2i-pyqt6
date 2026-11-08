@@ -94,7 +94,7 @@ if [[ ! -d "$VENV" ]]; then
     python3 -m venv "$VENV"
 fi
 "$VENV/bin/pip" install --quiet --upgrade pip
-"$VENV/bin/pip" install --quiet mysql-connector-python
+"$VENV/bin/pip" install --quiet -r "$PROJET/requirements-serveur.txt"
 chown -R "${SUDO_USER:-root}:${SUDO_USER:-root}" "$VENV"
 
 # --- 5. Variables d'environnement ------------------------------------

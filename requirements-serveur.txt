@@ -1,0 +1,8 @@
+# Dependances des deux VM serveurs (VM1 moteur, VM2 passerelle).
+#
+# Les serveurs tournent sans interface graphique : ils n'ont pas besoin
+# de PyQt6, qui tirerait tout Qt sur une machine sans ecran. Le poste
+# client, lui, installe requirements.txt a la racine.
+#
+# Versions exactes, comme l'exige la consigne du projet.
+mysql-connector-python==26.7.0

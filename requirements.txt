@@ -1,3 +1,8 @@
+# Dependances du poste client (interface PyQt6).
+# Les deux VM serveurs utilisent requirements-serveur.txt, plus leger.
+#
+# Necessite Python 3.11 ou plus recent.
+# Teste avec Python 3.11.9 (Windows) et 3.13.5 (Debian 13).
 PyQt6==6.11.0
 mysql-connector-python==26.7.0
 matplotlib==3.11.2
