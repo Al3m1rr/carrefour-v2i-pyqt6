@@ -261,7 +261,21 @@ usermod -aG sudo carrefour
 exit
 ```
 
-Puis reprenez au point **B.2**.
+Puis reprenez au point **B.2**, avec une particularité : sur des VM
+créées par ce script, la carte du réseau privé existe mais Debian ne
+lui attribue aucune adresse. Il faut donc la fixer au moment du
+provisionnement (étape B.3) :
+
+```bash
+# Sur la VM1
+sudo IP_LOCALE=192.168.56.10 bash deploiement/installer_vm.sh moteur
+
+# Sur la VM2
+sudo IP_LOCALE=192.168.56.11 IP_MOTEUR=192.168.56.10 bash deploiement/installer_vm.sh passerelle
+```
+
+Vérifiez ensuite avec `ip -brief addr` que la seconde carte est bien
+`UP` avec l'adresse demandée.
 
 ---
 
