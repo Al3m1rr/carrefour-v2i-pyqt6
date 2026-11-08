@@ -58,10 +58,46 @@ Dans VirtualBox, cliquez sur **Nouvelle**.
 |---|---|
 | Nom | `VM1-Simulation` |
 | Image ISO | le fichier `.iso` téléchargé |
-| Installation automatique | **à décocher** si la case apparaît |
 | Mémoire vive | `2048` Mo |
 | Processeurs | `2` |
 | Disque dur | `20` Go, alloué dynamiquement |
+
+### ⚠ L'écran « Installation automatique » — à désactiver
+
+Dès que vous sélectionnez l'ISO, VirtualBox déplie une section
+**« Set up unattended guest OS installation »** (ou « Installation
+automatique du système invité »), avec des champs *User Name*,
+*Password*, *Host Name*…
+
+**Cochez la case « Skip Unattended Installation »** (« Ignorer
+l'installation automatique »), juste sous le champ de l'image ISO.
+Toute la section se grise. C'est ce que l'on veut.
+
+**Pourquoi ne pas s'en servir ?** Nous l'avons testée sur deux VM :
+
+- elle définit un **mot de passe root**, ce qui empêche Debian
+  d'installer `sudo` et d'y ajouter votre utilisateur ;
+- sa commande post-installation **ne s'exécute pas** sur Debian 13 :
+  ni `sudo`, ni `git` ne sont installés malgré ce qui est demandé.
+
+Résultat : une VM sans `sudo` ni `git`, avec une étape de rattrapage à
+faire en root. L'installation manuelle, décrite en 2.5, prend le même
+temps et donne une machine propre.
+
+> **Si vous tenez à l'utiliser quand même**, voici les valeurs
+> attendues. Le champ *Host Name* s'affiche en **rouge** tant qu'il ne
+> contient pas de point : VirtualBox exige un nom pleinement qualifié.
+>
+> | Champ | Valeur |
+> |---|---|
+> | User Name | `carrefour` |
+> | Password / Confirm | un mot de passe, à noter |
+> | Host Name | `vm1.carrefour.lan` — **le point est obligatoire** |
+> | Domain Name | laissez la valeur par défaut |
+> | Install Guest Additions | décoché |
+>
+> Il faudra ensuite faire l'étape de rattrapage décrite en 4.1
+> (`su -` puis installation de `sudo` et `git`).
 
 Cliquez sur **Terminer**.
 
@@ -392,6 +428,8 @@ Pour relancer plus tard, reprenez directement à l'**étape 5**.
 | `sudo : commande introuvable` | Mot de passe root défini à l'installation. Voir l'encadré en 4.1 |
 | `pip install` échoue | Python trop ancien, il faut **3.11+** : `python3 --version` |
 | Ce que je tape ne fait rien | Un service occupe le terminal. Second écran avec **Alt + F2** |
+| `Host Name` en rouge à la création de la VM | VirtualBox exige un point : `vm1.carrefour.lan`. Mieux : cochez **Skip Unattended Installation** (voir 2.1) |
+| VM installée mais `sudo` et `git` absents | L'installation automatique de VirtualBox a été utilisée. Rattrapage en 4.1 |
 | `demarrer.sh: command not found` | Mauvais dossier : `cd carrefour-v2i-pyqt6` |
 | La souris reste bloquée | Touche **Ctrl de droite** |
 | « base désactivée » au démarrage | MariaDB absent ou arrêté. La simulation tourne, mais n'enregistre rien |
