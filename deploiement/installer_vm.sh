@@ -65,9 +65,31 @@ echo "    Adresses de cette machine :"
 ip -brief addr show | grep -v '^lo' | sed 's/^/      /'
 
 if [[ -n "${IP_LOCALE:-}" ]]; then
-    CARTE="${CARTE:-$(ip -o -4 addr show | awk '$2!="lo"{print $2}' | tail -1)}"
-    CARTE="${CARTE:-$(ls /sys/class/net | grep -E '^(en|eth)' | tail -1)}"
-    echo "    IP_LOCALE demande : $IP_LOCALE sur $CARTE"
+    # La carte a configurer est celle du reseau prive : elle n'a pas
+    # encore d'adresse IPv4, contrairement a la carte NAT. Chercher au
+    # contraire une carte DEJA adressee designerait le NAT et casserait
+    # l'acces Internet de la machine.
+    ROUTE=$(ip route show default 2>/dev/null | awk '{print $5}' | head -1)
+    if [[ -z "${CARTE:-}" ]]; then
+        for i in $(ls /sys/class/net | grep -E '^(en|eth)'); do
+            [[ "$i" == "$ROUTE" ]] && continue          # jamais la carte Internet
+            ip -4 addr show "$i" | grep -q 'inet ' && continue
+            CARTE="$i"; break
+        done
+    fi
+    # Repli : la derniere carte qui n'est pas celle de la route par defaut.
+    if [[ -z "${CARTE:-}" ]]; then
+        CARTE=$(ls /sys/class/net | grep -E '^(en|eth)' | grep -v "^${ROUTE}$" | tail -1)
+    fi
+    if [[ -z "${CARTE:-}" ]]; then
+        echo "    Aucune seconde carte reseau trouvee : etape ignoree." >&2
+        echo "    Verifiez que la VM a bien 2 cartes (NAT + reseau prive)." >&2
+        IP_LOCALE=""
+    fi
+fi
+
+if [[ -n "${IP_LOCALE:-}" ]]; then
+    echo "    IP_LOCALE demande : $IP_LOCALE sur $CARTE (Internet : ${ROUTE:-aucune})"
 
     if systemctl is-active --quiet NetworkManager; then
         nmcli con add type ethernet ifname "$CARTE" con-name carrefour-prive \
@@ -86,10 +108,25 @@ iface $CARTE inet static
     netmask 255.255.255.0
 EOF
         fi
-        ifup "$CARTE" 2>/dev/null || systemctl restart networking || true
+        ifup "$CARTE" 2>/dev/null || systemctl restart networking 2>/dev/null || true
         echo "    Configure via ifupdown"
     else
-        echo "    Pile reseau non reconnue : configurez $IP_LOCALE a la main."
+        echo "    Pile reseau non reconnue, application directe."
+    fi
+
+    # Application immediate, quelle que soit la pile : ifup peut echouer
+    # sans message et laisser la carte eteinte. Le fichier de conf
+    # ecrit plus haut assure la persistance au redemarrage, ces deux
+    # commandes assurent que ca marche tout de suite.
+    ip link set "$CARTE" up 2>/dev/null || true
+    ip addr replace "$IP_LOCALE/24" dev "$CARTE" 2>/dev/null || true
+
+    # Verification : on ne laisse pas passer un echec silencieux.
+    if ip -4 addr show "$CARTE" | grep -q "$IP_LOCALE"; then
+        echo "    OK : $CARTE porte $IP_LOCALE"
+    else
+        echo "    ECHEC : $CARTE n'a pas pris l'adresse $IP_LOCALE." >&2
+        echo "    Verifiez que la VM a bien une 2e carte en reseau prive hote." >&2
     fi
 else
     echo "    (reseau laisse tel quel ; passez IP_LOCALE=... pour fixer une IP)"
