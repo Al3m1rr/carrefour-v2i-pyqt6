@@ -58,7 +58,21 @@ utilisateur. Il faut donc une étape d'amorçage, à faire **une fois** sur
 chaque VM.
 
 Dans VirtualBox, sélectionnez la VM, cliquez sur **Afficher**, puis
-connectez-vous avec le compte `carrefour`. Passez root et lancez :
+connectez-vous avec le compte créé par le script :
+
+| | |
+|---|---|
+| Identifiant | `carrefour` |
+| Mot de passe | `Carrefour2026!` |
+
+Ce sont des identifiants de machines de test locales, définis dans
+`creer_vms.ps1` — changez-les dans le script si vous préférez.
+
+> Deux pièges classiques : le mot de passe ne s'affiche pas pendant la
+> frappe (normal sous Linux), et le clavier de la VM est en **QWERTY**,
+> donc le `!` n'est pas sur la touche attendue d'un clavier AZERTY.
+
+Passez ensuite root et lancez :
 
 ```bash
 su -                                   # même mot de passe que l'utilisateur
