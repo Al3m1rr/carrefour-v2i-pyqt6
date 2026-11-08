@@ -279,6 +279,80 @@ Vérifiez ensuite avec `ip -brief addr` que la seconde carte est bien
 
 ---
 
+## Consulter les bases de données
+
+Le projet utilise **deux bases, une par VM**. Chacune est placée à côté
+du processus qui écrit dedans : le moteur enregistre chaque usager à
+chaque tick, la passerelle n'écrit qu'au début et à la fin d'une
+session.
+
+| | VM1 (moteur) | VM2 (passerelle) |
+|---|---|---|
+| Base | `carrefour_moteur_db` | `carrefour_stats_db` |
+| Tables | `usager`, `evenement` | `session_simulation` |
+| Écriture | temps réel | 2 fois par session |
+
+Connectez-vous d'abord à la VM concernée — console VirtualBox ou SSH,
+selon votre configuration — puis :
+
+```bash
+sudo mariadb carrefour_moteur_db     # sur la VM1
+sudo mariadb carrefour_stats_db      # sur la VM2
+```
+
+`sudo` suffit : MariaDB authentifie root par le socket système, aucun
+mot de passe n'est demandé.
+
+### Requêtes de vérification
+
+Sur la **VM1**, le résultat principal du projet — les véhicules
+d'urgence doivent afficher un temps de traversée nettement inférieur
+aux véhicules ordinaires :
+
+```sql
+SELECT type_usager, COUNT(*) AS nb, ROUND(AVG(temps_parcours),2) AS temps_moyen_s
+FROM usager WHERE temps_parcours IS NOT NULL
+GROUP BY type_usager ORDER BY temps_moyen_s;
+```
+
+Les dernières urgences passées :
+
+```sql
+SELECT id, direction_origine, heure_entree, ROUND(temps_parcours,2) AS duree_s
+FROM usager WHERE type_usager='vehicule_urgence' AND heure_sortie IS NOT NULL
+ORDER BY id DESC LIMIT 10;
+```
+
+Les événements, rattachés à leur usager par clé étrangère :
+
+```sql
+SELECT e.type_evenement, u.type_usager, e.horodatage
+FROM evenement e JOIN usager u ON u.id = e.usager_id
+ORDER BY e.id DESC LIMIT 10;
+```
+
+Sur la **VM2**, le bilan de chaque session :
+
+```sql
+SELECT * FROM session_simulation ORDER BY id DESC;
+```
+
+> Une ligne dont `date_fin` est `NULL` correspond soit à la session en
+> cours, soit à une session interrompue brutalement. C'est le `Ctrl+C`
+> sur la passerelle qui écrit le bilan de fin.
+
+### Vérifier la répartition
+
+Sur la VM1 :
+
+```sql
+SHOW DATABASES;
+```
+
+`carrefour_moteur_db` apparaît, mais **pas** `carrefour_stats_db` —
+et inversement sur la VM2. C'est la démonstration que les données sont
+réellement réparties sur deux machines, et non centralisées.
+
 ## Confort : passer le clavier des VM en AZERTY
 
 Les VM installées par notre script ont un clavier **QWERTY**, ce qui
