@@ -313,6 +313,11 @@ même façon et vise également la VM2 :
 python3 ambulance/main_ambulance.py 192.168.56.11 5050 1 N   # alerte P1 depuis le nord
 ```
 
+> **Vous voulez juste tester le projet ?** Le guide
+> [deploiement/README.md](deploiement/README.md) donne deux chemins :
+> tout sur un seul PC en 5 minutes, ou le déploiement complet sur deux
+> VM Debian avec des scripts automatisés.
+
 ### Tout faire tourner sur un seul PC (démonstration rapide)
 
 Sous Windows, `LANCER_TOUT.bat` ouvre les trois rôles dans trois
