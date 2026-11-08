@@ -24,12 +24,13 @@ if [[ $EUID -ne 0 ]]; then
 fi
 
 # --- Parametres propres a chaque role --------------------------------
+# IP_LOCALE n'a volontairement pas de valeur par defaut : sans elle, le
+# reseau de la machine est laisse intact (cas d'une VM fournie par un
+# tiers, deja configuree).
 if [[ "$ROLE" == "moteur" ]]; then
-    IP_LOCALE="${IP_LOCALE:-192.168.56.10}"
     BASE="carrefour_moteur_db"
     SCHEMA="schema_moteur.sql"
 else
-    IP_LOCALE="${IP_LOCALE:-192.168.56.11}"
     BASE="carrefour_stats_db"
     SCHEMA="schema_passerelle.sql"
 fi
@@ -41,7 +42,6 @@ PROJET="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 echo "=========================================================="
 echo " Provisionnement de la VM : role $ROLE"
 echo " Base    : $BASE"
-echo " IP      : $IP_LOCALE (reseau prive hote)"
 echo " Projet  : $PROJET"
 echo "=========================================================="
 
@@ -50,18 +50,34 @@ echo "--> Installation des paquets"
 apt-get update -qq
 apt-get install -y -qq mariadb-server python3 python3-venv python3-pip git
 
-# --- 2. Reseau prive entre les deux VM -------------------------------
-# La seconde carte reseau (reseau prive hote) n'est pas configuree par
-# l'installateur Debian : on lui fixe une IP statique pour que les deux
-# VM se joignent toujours a la meme adresse.
-echo "--> Configuration du reseau prive"
-CARTE=$(ls /sys/class/net | grep -E '^(en|eth)' | sed -n 2p || true)
-if [[ -z "$CARTE" ]]; then
-    echo "    Aucune seconde carte reseau detectee, etape ignoree."
-    echo "    Verifiez que la VM a bien 2 cartes (NAT + reseau prive hote)."
-else
-    if ! grep -q "$CARTE" /etc/network/interfaces; then
-        cat >> /etc/network/interfaces <<EOF
+# --- 2. Reseau ------------------------------------------------------
+# Par defaut on NE TOUCHE PAS au reseau de la machine : sur une VM
+# fournie par un tiers, il est deja configure et l'ecraser ferait plus
+# de mal que de bien. On se contente de montrer les adresses, pour que
+# l'operateur sache laquelle indiquer a l'autre VM.
+#
+# Pour fixer malgre tout une IP statique (notre propre montage), passer
+# IP_LOCALE : le script detecte alors la pile reseau utilisee, car une
+# Debian peut utiliser ifupdown, NetworkManager ou systemd-networkd, et
+# ecrire dans le mauvais fichier serait ignore en silence.
+echo "--> Reseau"
+echo "    Adresses de cette machine :"
+ip -brief addr show | grep -v '^lo' | sed 's/^/      /'
+
+if [[ -n "${IP_LOCALE:-}" ]]; then
+    CARTE="${CARTE:-$(ip -o -4 addr show | awk '$2!="lo"{print $2}' | tail -1)}"
+    CARTE="${CARTE:-$(ls /sys/class/net | grep -E '^(en|eth)' | tail -1)}"
+    echo "    IP_LOCALE demande : $IP_LOCALE sur $CARTE"
+
+    if systemctl is-active --quiet NetworkManager; then
+        nmcli con add type ethernet ifname "$CARTE" con-name carrefour-prive \
+              ip4 "$IP_LOCALE/24" 2>/dev/null \
+            || nmcli con mod carrefour-prive ipv4.addresses "$IP_LOCALE/24" ipv4.method manual
+        nmcli con up carrefour-prive || true
+        echo "    Configure via NetworkManager"
+    elif [[ -d /etc/network ]]; then
+        if ! grep -q "carrefour" /etc/network/interfaces 2>/dev/null; then
+            cat >> /etc/network/interfaces <<EOF
 
 # Reseau prive entre les VM du projet carrefour
 auto $CARTE
@@ -69,11 +85,14 @@ iface $CARTE inet static
     address $IP_LOCALE
     netmask 255.255.255.0
 EOF
-        echo "    Carte $CARTE fixee a $IP_LOCALE"
+        fi
+        ifup "$CARTE" 2>/dev/null || systemctl restart networking || true
+        echo "    Configure via ifupdown"
     else
-        echo "    Carte $CARTE deja configuree"
+        echo "    Pile reseau non reconnue : configurez $IP_LOCALE a la main."
     fi
-    ifup "$CARTE" 2>/dev/null || systemctl restart networking || true
+else
+    echo "    (reseau laisse tel quel ; passez IP_LOCALE=... pour fixer une IP)"
 fi
 
 # --- 3. Base de donnees locale ---------------------------------------
@@ -138,17 +157,26 @@ if command -v ufw >/dev/null 2>&1; then
     ufw allow 22/tcp >/dev/null
 fi
 
+MON_IP=$(ip -o -4 addr show | awk '$2!="lo"{print $4}' | cut -d/ -f1 | tail -1)
+
 echo
 echo "=========================================================="
 echo " VM '$ROLE' prete."
 echo
+echo " Demarrer :   ./deploiement/demarrer.sh $ROLE"
+echo
 if [[ "$ROLE" == "moteur" ]]; then
-    echo " Lancer le moteur :"
-    echo "   set -a && . /etc/carrefour.env && set +a"
-    echo "   $VENV/bin/python serveur/main_moteur.py"
+    echo " Cette VM ecoute sur le port 5051."
+    echo " Notez son adresse : ${MON_IP:-<voir ip -brief addr>}"
+    echo " C'est elle a indiquer a la VM2, via IP_MOTEUR."
 else
-    echo " Lancer la passerelle :"
-    echo "   set -a && . /etc/carrefour.env && set +a"
-    echo "   $VENV/bin/python serveur/main_passerelle.py"
+    echo " Cette VM ecoute sur le port 5050 pour les clients."
+    echo " Notez son adresse : ${MON_IP:-<voir ip -brief addr>}"
+    echo " C'est elle a indiquer au client PyQt6, via"
+    echo " CARREFOUR_SOCKET_SERVEUR_HOTE."
+    echo
+    echo " Elle joindra le moteur sur : ${IP_MOTEUR:-192.168.56.10}"
+    echo " Si ce n'est pas la bonne adresse, relancez avec :"
+    echo "   sudo IP_MOTEUR=<ip-de-la-vm1> bash deploiement/installer_vm.sh passerelle"
 fi
 echo "=========================================================="
