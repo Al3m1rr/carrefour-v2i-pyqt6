@@ -3,3 +3,4 @@ __pycache__/
 venv/
 *.csv
 *.png
+identifiants_vm.local.txt
