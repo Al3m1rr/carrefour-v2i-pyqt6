@@ -98,8 +98,13 @@ if [[ -n "${IP_LOCALE:-}" ]]; then
         nmcli con up carrefour-prive || true
         echo "    Configure via NetworkManager"
     elif [[ -d /etc/network ]]; then
-        if ! grep -q "carrefour" /etc/network/interfaces 2>/dev/null; then
-            cat >> /etc/network/interfaces <<EOF
+        # On retire toujours notre bloc precedent avant de le reecrire.
+        # Se contenter de ne rien faire s'il existe deja laisserait en
+        # place une entree erronee (mauvaise carte, mauvaise adresse)
+        # qu'aucune reexecution ne corrigerait.
+        sed -i '/# Reseau prive entre les VM du projet carrefour/,+4d' \
+            /etc/network/interfaces 2>/dev/null || true
+        cat >> /etc/network/interfaces <<EOF
 
 # Reseau prive entre les VM du projet carrefour
 auto $CARTE
@@ -107,12 +112,22 @@ iface $CARTE inet static
     address $IP_LOCALE
     netmask 255.255.255.0
 EOF
-        fi
         ifup "$CARTE" 2>/dev/null || systemctl restart networking 2>/dev/null || true
         echo "    Configure via ifupdown"
     else
         echo "    Pile reseau non reconnue, application directe."
     fi
+
+    # Retirer l'adresse si une execution precedente l'a posee sur une
+    # autre carte : deux cartes portant la meme adresse creent deux
+    # routes concurrentes, et le noyau repond alors par la mauvaise.
+    for autre in $(ls /sys/class/net | grep -E '^(en|eth)'); do
+        [[ "$autre" == "$CARTE" ]] && continue
+        if ip -4 addr show "$autre" | grep -q "$IP_LOCALE"; then
+            echo "    Nettoyage : $IP_LOCALE retiree de $autre"
+            ip addr del "$IP_LOCALE/24" dev "$autre" 2>/dev/null || true
+        fi
+    done
 
     # Application immediate, quelle que soit la pile : ifup peut echouer
     # sans message et laisser la carte eteinte. Le fichier de conf
