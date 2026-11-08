@@ -37,10 +37,13 @@ set +a
 PYTHON="venv/bin/python"
 [[ -x "$PYTHON" ]] || PYTHON="python3"
 
+# -u desactive la mise en tampon de la sortie : sans cela, rediriger le
+# journal vers un fichier (nohup ... > sortie.log) ne montre rien avant
+# l'arret du service, ce qui donne l'impression d'un plantage.
 if [[ "$ROLE" == "moteur" ]]; then
     echo "Demarrage du moteur (VM1). Ctrl+C pour arreter."
-    exec "$PYTHON" serveur/main_moteur.py
+    exec "$PYTHON" -u serveur/main_moteur.py
 else
     echo "Demarrage de la passerelle (VM2). Ctrl+C pour arreter."
-    exec "$PYTHON" serveur/main_passerelle.py
+    exec "$PYTHON" -u serveur/main_passerelle.py
 fi
