@@ -103,9 +103,14 @@ class DAOPasserelle(_DAOBase):
             session_id: identifiant renvoye par ouvrir_session().
             stats (dict): bloc "stats" du dernier etat recu de la VM1
                 (nb_collisions, passages par type, temps_moyen_urgence).
+
+        Returns:
+            True si le bilan a ete ecrit, False s'il n'y avait rien a
+            ecrire — cas d'une session pendant laquelle le moteur n'a
+            jamais ete joignable.
         """
         if session_id is None or not stats:
-            return
+            return False
         passages = stats.get("passages", {})
         nb_vehicules = sum(passages.get(t, 0) for t in self.TYPES_VEHICULES)
         requete = (
@@ -123,3 +128,4 @@ class DAOPasserelle(_DAOBase):
             session_id,
         )
         self._executer(requete, valeurs)
+        return True

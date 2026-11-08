@@ -93,8 +93,12 @@ class Passerelle:
     def arreter(self):
         """Cloture la session en base et ferme proprement les sockets."""
         if self.dao:
-            self.dao.cloturer_session(self.session_id, self.dernier_etat.get("stats"))
-            print("[DB:passerelle] Bilan de session enregistre.")
+            if self.dao.cloturer_session(self.session_id,
+                                         self.dernier_etat.get("stats")):
+                print("[DB:passerelle] Bilan de session enregistre.")
+            else:
+                print("[DB:passerelle] Aucun bilan a enregistrer : "
+                      "aucun etat recu du moteur pendant cette session.")
         self.lien.arreter()
         self.facade.arreter()
         if self.connexion_db:
