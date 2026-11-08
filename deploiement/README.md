@@ -45,6 +45,48 @@ Le client PyQt6 tourne **sur votre PC**, pas sur les VM : il se connecte
 à la VM2. (Vous pouvez aussi le lancer depuis une VM, à condition
 qu'elle ait un environnement graphique.)
 
+### ⚠ Le risque principal : deux VM qui ne se voient pas
+
+C'est, de loin, la cause d'échec la plus probable — et elle n'a rien à
+voir avec le projet lui-même. Une VM créée sans précaution n'a qu'une
+carte **NAT**, qui donne accès à Internet mais **isole la machine** :
+deux VM en NAT ne peuvent pas se joindre, même sur le même hôte. Le
+déploiement réparti est alors impossible.
+
+**Comment le savoir en 10 secondes.** Depuis la VM2 :
+
+```bash
+ping <ip-de-la-vm1>
+```
+
+Si ça ne répond pas, il manque une carte réseau commune.
+
+**Comment le corriger.** Pour **chacune** des deux VM, dans VirtualBox :
+
+1. VM éteinte → **Configuration** → **Réseau**
+2. Laissez l'**Adaptateur 1** en *NAT* (il sert à `apt` et `git`)
+3. Onglet **Adaptateur 2** → cochez **Activer la carte réseau**
+4. *Attaché à* : **Réseau privé hôte** (host-only)
+5. Choisissez le **même nom de réseau pour les deux VM** — c'est le
+   point qui compte
+6. Démarrez, puis vérifiez avec `ip -brief addr` : une seconde adresse
+   doit apparaître, en général en `192.168.56.x`
+
+> *Réseau interne* fonctionne aussi pour relier les deux VM, mais votre
+> PC ne les verra pas — or le client PyQt6 tourne sur votre PC et doit
+> joindre la VM2. Préférez donc **Réseau privé hôte**.
+
+Si la seconde carte existe mais n'a pas d'adresse (`DOWN` ou sans
+`inet`), c'est qu'elle n'est pas configurée côté Debian. Deux
+solutions : activer le DHCP du réseau privé hôte dans VirtualBox
+(*Fichier → Outils → Gestionnaire de réseau hôte*), ou laisser nos
+scripts fixer une adresse :
+
+```bash
+sudo IP_LOCALE=192.168.56.10 bash deploiement/installer_vm.sh moteur
+sudo IP_LOCALE=192.168.56.11 IP_MOTEUR=192.168.56.10 bash deploiement/installer_vm.sh passerelle
+```
+
 ### Prérequis
 
 Avant de commencer, vérifiez ces trois points sur vos VM :
@@ -198,9 +240,19 @@ Identifiants créés par le script :
 > frappe (normal sous Linux), et le clavier de la VM est en **QWERTY**,
 > donc le `!` n'est pas sur la touche attendue d'un clavier AZERTY.
 
-**Après l'installation**, VirtualBox définit un mot de passe root, ce
-qui empêche Debian d'installer `sudo` et d'y ajouter le premier
-utilisateur. Faites-le une fois sur chaque VM, depuis la console :
+**Après l'installation, une étape d'amorçage est obligatoire.** Deux
+raisons, l'une et l'autre vérifiées sur nos propres machines :
+
+- VirtualBox définit un mot de passe root, ce qui empêche Debian
+  d'appliquer son comportement habituel — installer `sudo` et y ajouter
+  le premier utilisateur ;
+- la commande post-installation de VirtualBox, censée installer les
+  paquets, **ne s'exécute pas réellement** sur Debian 13. Nous l'avons
+  rendue silencieuse pour que l'installation se termine sans blocage,
+  mais elle n'installe rien.
+
+Résultat : la VM démarre avec SSH, mais **sans `sudo` ni `git`**.
+Faites ceci une fois sur chaque VM, depuis la console :
 
 ```bash
 su -                                   # même mot de passe
@@ -220,7 +272,9 @@ Puis reprenez au point **B.2**.
 | Client en « Mode dégradé » | la passerelle (VM2) n'est pas lancée, ou mauvaise adresse dans `CARREFOUR_SOCKET_SERVEUR_HOTE` |
 | VM2 répète « VM1 injoignable » | le moteur n'est pas lancé, ou `IP_MOTEUR` est fausse — relancez l'étape B.3 avec la bonne |
 | « base désactivée » au démarrage | MariaDB absent ou mot de passe erroné — sans gravité, la simulation tourne quand même |
-| Les deux VM ne se pingent pas | elles ne partagent pas de carte réseau commune dans VirtualBox |
+| Les deux VM ne se pingent pas | elles n'ont qu'une carte NAT, qui les isole — voir *Le risque principal* plus haut |
+| La 2ᵉ carte existe mais est `DOWN` ou sans adresse | pas de DHCP sur le réseau privé hôte — utilisez `IP_LOCALE=` |
+| `sudo : commande introuvable` sur une VM fraîche | étape d'amorçage non faite — `su -` puis `apt install -y sudo git` |
 | `pip install` échoue | Python trop ancien : il faut **3.11 ou plus récent** (`python3 --version`) |
 | `demarrer.sh: command not found` | vous n'êtes pas dans le dossier `carrefour-v2i-pyqt6` |
 | `/etc/carrefour.env: Permission non accordée` | relancez `installer_vm.sh`, qui en corrige le propriétaire |
