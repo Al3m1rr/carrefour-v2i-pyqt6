@@ -3,12 +3,25 @@
 # A executer sur le PC hote (Windows), depuis la racine du projet :
 #     powershell -ExecutionPolicy Bypass -File deploiement\creer_vms.ps1
 #
+# Si des VM portent deja ces noms sur votre poste, changez le prefixe :
+#     ... -File deploiement\creer_vms.ps1 -Prefixe MonGroupe -PortSSH1 2301 -PortSSH2 2302
+#
 # Prerequis : VirtualBox 7.x installe. Le script telecharge l'ISO Debian
 # si elle est absente, cree les deux VM, et lance une installation sans
 # intervention. Comptez 20 a 40 minutes selon la connexion.
 #
 # Une fois les VM installees, provisionnez-les avec :
 #     deploiement/installer_vm.sh  (voir le README)
+
+param(
+    # Prefixe des noms de VM, pour ne pas ecraser des machines existantes.
+    [string]$Prefixe = "Carrefour",
+    # Ports de l'hote rediriges vers le SSH de chaque VM.
+    [int]$PortSSH1 = 2201,
+    [int]$PortSSH2 = 2202,
+    # Memoire par VM, en Mo. 1536 suffit pour une Debian sans bureau.
+    [int]$RamMo = 1536
+)
 
 $ErrorActionPreference = "Stop"
 
@@ -22,12 +35,12 @@ $isoUrl   = "https://cdimage.debian.org/debian-cd/current/amd64/iso-cd/debian-13
 $isoPath  = Join-Path $env:USERPROFILE "Downloads\debian-13.7.0-amd64-netinst.iso"
 $utilisateur = "carrefour"
 $motDePasse  = "Carrefour2026!"     # VM de test locale uniquement
-$ramMo    = 1536
+$ramMo    = $RamMo
 $disqueMo = 20000
 
 $machines = @(
-    @{ Nom = "Carrefour-VM1-Simulation"; Hote = "vm1.carrefour.lan"; PortSSH = 2201 },
-    @{ Nom = "Carrefour-VM2-Passerelle"; Hote = "vm2.carrefour.lan"; PortSSH = 2202 }
+    @{ Nom = "$Prefixe-VM1-Simulation"; Hote = "vm1.carrefour.lan"; PortSSH = $PortSSH1 },
+    @{ Nom = "$Prefixe-VM2-Passerelle"; Hote = "vm2.carrefour.lan"; PortSSH = $PortSSH2 }
 )
 
 # --- 1. ISO Debian ---------------------------------------------------
