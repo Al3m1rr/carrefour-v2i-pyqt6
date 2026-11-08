@@ -49,9 +49,36 @@ Chaque VM reçoit deux cartes réseau :
 | 1 | NAT | accès Internet (apt) + redirection SSH vers l'hôte |
 | 2 | Réseau privé hôte | dialogue entre les deux VM, en 192.168.56.x |
 
-### 2. Provisionner chaque VM
+### 2. Amorcer chaque VM (première connexion)
 
-Une fois l'installation terminée, connectez-vous et déployez le projet :
+VirtualBox définit un mot de passe root pendant l'installation
+automatique. Conséquence : Debian n'applique pas son comportement
+habituel, qui consiste à installer `sudo` et à y ajouter le premier
+utilisateur. Il faut donc une étape d'amorçage, à faire **une fois** sur
+chaque VM.
+
+Dans VirtualBox, sélectionnez la VM, cliquez sur **Afficher**, puis
+connectez-vous avec le compte `carrefour`. Passez root et lancez :
+
+```bash
+su -                                   # même mot de passe que l'utilisateur
+apt-get update
+apt-get install -y sudo git
+usermod -aG sudo carrefour
+exit
+exit                                   # puis reconnectez-vous
+```
+
+Vérifiez ensuite depuis le PC hôte que SSH répond :
+
+```bash
+ssh -p 2201 carrefour@127.0.0.1        # VM1
+ssh -p 2202 carrefour@127.0.0.1        # VM2
+```
+
+### 3. Provisionner chaque VM
+
+Une fois l'amorçage fait, déployez le projet :
 
 ```bash
 # VM1 — moteur de simulation

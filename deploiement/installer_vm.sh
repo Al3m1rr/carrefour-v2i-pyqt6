@@ -119,6 +119,10 @@ CARREFOUR_SOCKET_ECOUTE=0.0.0.0
 CARREFOUR_SOCKET_PORT=5050
 EOF
 fi
+# Le fichier contient le mot de passe de la base : lisible par son seul
+# proprietaire. On le donne a l'utilisateur du projet, sinon lui seul ne
+# pourrait pas le lire et devrait lancer les services en root.
+chown "${SUDO_USER:-root}:${SUDO_USER:-root}" "$ENVFILE"
 chmod 600 "$ENVFILE"
 
 # --- 6. Pare-feu -----------------------------------------------------

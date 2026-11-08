@@ -45,15 +45,25 @@ class DAOMoteur(_DAOBase):
     """Ecritures temps reel de la VM1 : tables `usager` et `evenement`."""
 
     def enregistrer_usager(self, usager):
-        """Insere un usager au moment ou il entre dans le carrefour."""
+        """Insere un usager au moment ou il entre dans le carrefour.
+
+        Les identifiants d'usagers repartent de 1 a chaque demarrage du
+        moteur : sans le ON DUPLICATE KEY, une seconde execution ferait
+        echouer toutes les insertions en doublon. La ligne est donc
+        ecrasee par la nouvelle execution.
+        """
         requete = (
             "INSERT INTO usager (id, type_usager, direction_origine, heure_entree) "
-            "VALUES (%s, %s, %s, %s)"
+            "VALUES (%s, %s, %s, %s) "
+            "ON DUPLICATE KEY UPDATE type_usager = VALUES(type_usager), "
+            "direction_origine = VALUES(direction_origine), "
+            "heure_entree = VALUES(heure_entree), "
+            "heure_sortie = NULL, temps_parcours = NULL"
         )
         valeurs = (
             usager.id,
             usager.type_usager,
-            usager.direction,
+            usager.branche,
             datetime.fromtimestamp(usager.heure_entree),
         )
         self._executer(requete, valeurs)

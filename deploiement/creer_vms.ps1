@@ -78,8 +78,18 @@ foreach ($m in $machines) {
     & $vbox storageattach $nom --storagectl "SATA" --port 1 --device 0 --type dvddrive --medium emptydrive
 
     Write-Host "=== Installation sans intervention de $nom ==="
-    $postInstall = "apt-get update; apt-get install -y openssh-server sudo python3-venv python3-pip git; " +
-                   "usermod -aG sudo $utilisateur; systemctl enable ssh"
+    # Chaque etape tolere l'echec et le script se termine par exit 0.
+    # Sans cela, le programme d'installation affiche en fin de parcours
+    # un dialogue bloquant "Echec de la commande preconfiguree" qui
+    # suspend l'installation automatique.
+    # A noter : VirtualBox definit un mot de passe root, ce qui empeche
+    # Debian d'appliquer son comportement par defaut (installer sudo et
+    # y ajouter le premier utilisateur). D'ou l'etape d'amorcage
+    # decrite dans deploiement/README.md.
+    $postInstall = "apt-get update || true; " +
+                   "DEBIAN_FRONTEND=noninteractive apt-get install -y openssh-server sudo git python3-venv python3-pip || true; " +
+                   "usermod -aG sudo $utilisateur || true; " +
+                   "exit 0"
     & $vbox unattended install $nom `
             --iso=$isoPath --user=$utilisateur --password=$motDePasse `
             --full-user-name="Projet Carrefour" --hostname=$($m.Hote) `
