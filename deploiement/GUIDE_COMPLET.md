@@ -197,49 +197,52 @@ faudra le rattraper à la main.
 
 ---
 
-## Étape 3 — Relier les deux VM (5 min)
+## Étape 3 — Vérifier les cartes réseau (2 min)
 
-Sans cette étape, les deux VM ne peuvent pas se parler et le projet ne
-fonctionne pas. C'est la cause d'échec la plus fréquente.
-
-Connectez-vous sur chaque VM (identifiant `carrefour`), puis :
+Connectez-vous sur chaque VM (identifiant `carrefour`) et tapez :
 
 ```bash
 ip -brief addr
 ```
 
-Vous devez voir **deux** cartes en plus de `lo` :
+Vous devez voir **deux** cartes en plus de `lo`, et c'est normal que la
+seconde soit `DOWN` :
 
 ```
-enp0s3   UP   10.0.2.15/24         <- NAT, Internet
-enp0s8   UP   192.168.56.10/24     <- réseau privé, entre les VM
+enp0s3   UP     10.0.2.15/24      <- NAT, Internet : doit être UP
+enp0s8   DOWN                     <- réseau privé : DOWN, c'est attendu
 ```
 
-**Notez l'adresse `192.168.56.x` de chaque VM.**
+> **`enp0s8` est `DOWN` et sans adresse : c'est le comportement normal.**
+> L'installateur Debian ne configure que l'interface principale, celle
+> choisie pendant l'installation. La seconde est reconnue mais laissée
+> éteinte.
+>
+> Elle sera activée et adressée automatiquement à l'étape 4.2, par le
+> script de provisionnement. Vous n'avez **rien à faire maintenant**.
 
-Vérifiez qu'elles se voient — depuis la **VM2**, avec l'adresse de
-votre VM1 :
+**Choisissez simplement les adresses** que porteront vos deux VM sur le
+réseau privé. Sauf raison particulière, gardez celles-ci :
 
-```bash
-ping -c 3 192.168.56.10
-```
+| VM | Adresse privée |
+|---|---|
+| VM1 (moteur) | `192.168.56.10` |
+| VM2 (passerelle) | `192.168.56.11` |
 
-Des réponses = tout va bien, passez à l'étape 4.
+Notez-les, vous les passerez au script à l'étape 4.2.
 
-### Si `enp0s8` est absente, `DOWN` ou sans adresse
+### Si `enp0s8` n'apparaît pas du tout
 
-**Absente** : l'adaptateur 2 n'a pas été ajouté. Éteignez la VM et
-reprenez l'étape 2.2.
+Là, en revanche, il y a un problème : l'Adaptateur 2 n'a pas été
+ajouté. Éteignez la VM et reprenez l'étape 2.2. Vérifiez aussi que les
+deux VM utilisent **le même nom de réseau** dans l'Adaptateur 2, sinon
+elles ne pourront pas se joindre.
 
-**Présente mais sans adresse** : le serveur DHCP du réseau privé est
-inactif. Soit vous l'activez une fois pour toutes dans VirtualBox
-(**Fichier** → **Outils** → **Gestionnaire de réseau hôte** →
-onglet **Serveur DHCP** → **Activer**, puis redémarrez les VM), soit
-vous fixez les adresses à l'étape 4 avec `IP_LOCALE`.
+### Si `enp0s3` est `DOWN`
 
-**Le ping ne passe pas** : les deux VM ne sont pas sur le même réseau
-privé. Vérifiez qu'elles ont bien le **même nom de réseau** dans
-l'adaptateur 2.
+Pas d'accès Internet : `apt` et `git clone` échoueront à l'étape 4.
+Vérifiez que l'Adaptateur 1 est bien en **NAT** dans la configuration
+de la VM.
 
 ---
 
@@ -269,27 +272,45 @@ cd carrefour-v2i-pyqt6
 
 Installe MariaDB, crée la base du rôle et prépare Python. 3 à 5 minutes.
 
+C'est ici que `enp0s8` est activée et reçoit son adresse, grâce au
+paramètre `IP_LOCALE`.
+
 Sur la **VM1** :
 
 ```bash
-sudo bash deploiement/installer_vm.sh moteur
+sudo IP_LOCALE=192.168.56.10 bash deploiement/installer_vm.sh moteur
 ```
 
-Sur la **VM2**, avec l'adresse privée de la VM1 :
+Sur la **VM2**, qui reçoit en plus l'adresse de la VM1 :
 
 ```bash
-sudo IP_MOTEUR=192.168.56.10 bash deploiement/installer_vm.sh passerelle
+sudo IP_LOCALE=192.168.56.11 IP_MOTEUR=192.168.56.10 bash deploiement/installer_vm.sh passerelle
 ```
 
-> Si vos cartes privées n'avaient pas d'adresse automatique, ajoutez
-> `IP_LOCALE` :
-> ```bash
-> sudo IP_LOCALE=192.168.56.10 bash deploiement/installer_vm.sh moteur
-> sudo IP_LOCALE=192.168.56.11 IP_MOTEUR=192.168.56.10 bash deploiement/installer_vm.sh passerelle
-> ```
+> Si vos VM avaient déjà une adresse sur le réseau privé — cas d'un
+> DHCP actif, ou de VM fournies déjà configurées — omettez `IP_LOCALE`
+> et le script ne touchera pas à votre réseau.
 
-En cas de doute, un script vérifie l'état de la machine sans rien
-modifier :
+### 4.3 Vérifier que les deux VM se voient
+
+Maintenant que les adresses sont posées, depuis la **VM2** :
+
+```bash
+ping -c 3 192.168.56.10
+```
+
+Des réponses = les deux VM communiquent, vous pouvez lancer.
+
+Pas de réponse ? Vérifiez sur chaque VM que `enp0s8` est bien montée :
+
+```bash
+ip -brief addr show enp0s8
+```
+
+Si elle est toujours `DOWN`, c'est que les deux VM ne partagent pas le
+même réseau privé dans VirtualBox (étape 2.2).
+
+En cas de doute, ce script diagnostique sans rien modifier :
 
 ```bash
 ./deploiement/verifier.sh 192.168.56.10
