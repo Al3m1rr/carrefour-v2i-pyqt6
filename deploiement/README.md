@@ -279,6 +279,35 @@ Vérifiez ensuite avec `ip -brief addr` que la seconde carte est bien
 
 ---
 
+## Confort : passer le clavier des VM en AZERTY
+
+Les VM installées par notre script ont un clavier **QWERTY**, ce qui
+rend pénible la saisie de `=`, `/`, `_` depuis un clavier français.
+Deux solutions.
+
+**La plus simple : travailler en SSH** depuis votre PC. Vous gardez
+votre clavier, et vous pouvez copier-coller les commandes.
+
+```bash
+ssh -p 2201 carrefour@127.0.0.1    # VM1
+ssh -p 2202 carrefour@127.0.0.1    # VM2
+```
+
+**Sinon, basculer le clavier de la VM**, une fois pour toutes :
+
+```bash
+sudo apt install -y console-setup keyboard-configuration
+sudo sed -i 's/^XKBLAYOUT=.*/XKBLAYOUT="fr"/' /etc/default/keyboard
+sudo setupcon --force
+```
+
+Effet immédiat, et conservé aux redémarrages. Pour un essai temporaire
+sans rien modifier : `sudo loadkeys fr`.
+
+> Attention : après ce changement, le mot de passe se tape avec la
+> disposition française. S'il contient `!`, ce n'est plus la même
+> touche qu'avant.
+
 ## Dépannage
 
 | Symptôme | Cause probable |
