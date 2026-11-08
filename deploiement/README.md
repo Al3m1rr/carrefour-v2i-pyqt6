@@ -100,25 +100,48 @@ Le script installe MariaDB, crée la base propre à la VM, fixe son IP sur
 le réseau privé, prépare l'environnement Python et ouvre le seul port
 dont ce rôle a besoin.
 
-### 3. Démarrer
+### 4. Démarrer
+
+Une fois les VM provisionnées, il suffit d'une commande par machine.
 
 ```bash
-# Sur la VM1
-set -a && . /etc/carrefour.env && set +a
-venv/bin/python serveur/main_moteur.py
+# Sur la VM1 — le moteur
+cd carrefour-v2i-pyqt6 && ./deploiement/demarrer.sh moteur
 ```
 
 ```bash
-# Sur la VM2
-set -a && . /etc/carrefour.env && set +a
-venv/bin/python serveur/main_passerelle.py
+# Sur la VM2 — la passerelle
+cd carrefour-v2i-pyqt6 && ./deploiement/demarrer.sh passerelle
 ```
 
 ```bash
 # Sur le PC hôte — l'interface graphique
-export CARREFOUR_SOCKET_SERVEUR_HOTE=192.168.56.11
+export CARREFOUR_SOCKET_SERVEUR_HOTE=192.168.56.11   # Windows : set CARREFOUR_...
 python3 client/main_client.py
 ```
+
+**Ordre important** : la VM1 d'abord, puis la VM2, puis le client. Si on
+inverse, ce n'est pas grave — la passerelle réessaie toutes les 3 s et
+le client affiche « Mode dégradé » en attendant.
+
+Laissez chaque service tourner dans sa fenêtre. `Ctrl+C` arrête
+proprement ; sur la VM2 c'est ce qui enregistre le bilan de la session
+en base.
+
+## Utilisation au quotidien : repartir de VM éteintes
+
+1. Ouvrez **VirtualBox**, sélectionnez `Carrefour-VM1-Simulation`,
+   cliquez sur **Démarrer**. Faites de même pour
+   `Carrefour-VM2-Passerelle`.
+2. Dans la fenêtre de chaque VM, connectez-vous avec le compte
+   `carrefour`.
+3. Sur la VM1 : `cd carrefour-v2i-pyqt6 && ./deploiement/demarrer.sh moteur`
+4. Sur la VM2 : `cd carrefour-v2i-pyqt6 && ./deploiement/demarrer.sh passerelle`
+   Vous devez voir `Connecte au moteur 192.168.56.10:5051`.
+5. Sur le PC hôte, lancez le client (voir ci-dessus). Le bandeau doit
+   afficher `Connecté au serveur 192.168.56.11:5050`.
+
+Pour éteindre : `Ctrl+C` dans chaque VM, puis `sudo poweroff`.
 
 ### Personnaliser les adresses
 
