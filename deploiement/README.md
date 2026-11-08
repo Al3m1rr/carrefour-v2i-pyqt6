@@ -61,6 +61,23 @@ Avant de commencer, vérifiez ces trois points sur vos VM :
 > que soit votre plan d'adressage. Les scripts ne modifient pas votre
 > configuration réseau.
 
+**Un script vérifie tout cela pour vous.** Sur chaque VM, après avoir
+récupéré le projet (étape 2) :
+
+```bash
+./deploiement/verifier.sh                   # état de cette VM
+./deploiement/verifier.sh 192.168.56.10     # + teste si l'autre VM répond
+```
+
+Il ne modifie rien et liste ce qui manque. Il sert aussi **après** le
+déploiement, pour diagnostiquer une panne.
+
+> **Si vos VM n'ont pas accès à Internet**, `apt` et `git clone`
+> échoueront. Récupérez alors le dépôt sur une machine connectée et
+> copiez le dossier sur chaque VM (dossier partagé VirtualBox, clé USB
+> ou `scp`), puis installez MariaDB et Python depuis l'ISO Debian
+> (`apt-cdrom add`).
+
 ### 1. Relever les adresses
 
 Sur **chaque** VM :
