@@ -46,6 +46,9 @@ démarrage.
 > **Pour le déploiement réel sur les deux VM Debian**, qui est
 > l'architecture du projet :
 >
+> - 🧾 **[Fiche de déploiement — VM fournies toutes prêtes](deploiement/FICHE_VM_FOURNIES.md)**
+>   — vos deux VM Debian existent déjà et ont un bureau : une page
+>   linéaire, à dérouler de haut en bas, 25 minutes.
 > - 📘 **[Guide pas à pas — objectif 30 minutes](deploiement/GUIDE_COMPLET.md)**
 >   — du téléchargement de l'ISO Debian à la simulation à l'écran :
 >   création des VM, installation écran par écran, réseau, déploiement

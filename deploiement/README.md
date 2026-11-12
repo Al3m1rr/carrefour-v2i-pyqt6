@@ -12,7 +12,8 @@ Trois parcours, selon ce dont vous disposez.
 | Vous avez… | Allez à |
 |---|---|
 | Juste un PC, vous voulez voir le projet tourner | [A. Sans VM, en 5 minutes](#a-sans-vm-en-5-minutes) |
-| **Deux VM Debian 13 vierges** | **[B. Déployer sur vos VM](#b-déployer-sur-deux-vm-debian-13-vierges)** |
+| **Deux VM Debian fournies toutes prêtes, avec bureau** | **[Fiche de déploiement](FICHE_VM_FOURNIES.md)** — linéaire, 25 min |
+| Deux VM Debian 13 vierges, sans bureau | [B. Déployer sur vos VM](#b-déployer-sur-deux-vm-debian-13-vierges) |
 | Rien, vous voulez tout créer | [C. Créer les VM de zéro](#c-créer-les-vm-de-zéro) |
 
 ---
