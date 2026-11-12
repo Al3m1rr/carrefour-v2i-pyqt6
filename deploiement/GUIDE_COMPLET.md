@@ -251,6 +251,56 @@ Notez-les, vous les passerez au script à l'étape 4.2.
 > Si l'un des deux manque, corrigez maintenant : la suite n'a aucune
 > chance de fonctionner.
 
+### VM déjà fournies avec un bureau (cas des postes de l'IUT)
+
+Des VM Debian préparées avec un environnement graphique utilisent
+**NetworkManager**, et leurs cartes réseau sont souvent mal déclarées.
+Deux symptômes à connaître, tous deux constatés sur des VM de l'IUT :
+
+- `enp0s3` est « déconnecté » : pas d'adresse, pas de route, donc ni
+  `apt` ni `git clone` (`ping: Le réseau n'est pas accessible`) ;
+- `enp0s8` est `UP` mais n'a aucune adresse : les deux VM ne se voient
+  pas (`Destination Host Unreachable`).
+
+> **Piège** : ces VM n'ont qu'un seul profil, `Wired connection 1`, qui
+> n'est lié à aucune carte. Chaque `nmcli device connect` le **déplace**
+> sur la carte demandée, et l'autre carte perd son adresse. Réparer une
+> carte en casse alors une autre, d'où l'impression de tourner en rond.
+
+**La correction : un profil par carte.** Sur **chaque** VM :
+
+```bash
+sudo nmcli connection add type ethernet ifname enp0s3 con-name nat ipv4.method auto
+```
+```bash
+sudo nmcli connection add type ethernet ifname enp0s8 con-name prive ipv4.method auto ipv4.never-default yes
+```
+```bash
+sudo nmcli connection modify "Wired connection 1" connection.autoconnect no
+```
+```bash
+sudo nmcli connection up nat
+```
+```bash
+sudo nmcli connection up prive
+```
+```bash
+ip -brief addr
+```
+
+Attendu : `enp0s3` en `10.0.2.x` **et** `enp0s8` en `192.168.56.x`, sur
+les deux VM en même temps. Si la troisième commande répond que le
+profil n'existe pas, ignorez-la. Le DHCP du réseau privé choisit les
+adresses : **utilisez celles que vous lisez**, pas celles de ce guide.
+
+> **Si `sudo` répond « n'est pas dans le fichier sudoers »**, passez
+> root avec `su -`, puis `usermod -aG sudo <votre-utilisateur>`, puis
+> ouvrez une nouvelle session avec `su - <votre-utilisateur>`.
+
+Ne communiquez jamais l'adresse `10.0.2.x` à l'autre VM : c'est celle
+du NAT, identique sur toutes les VM et injoignable depuis l'extérieur.
+L'adresse à donner (`IP_MOTEUR`) est celle de `enp0s8`.
+
 ### Si `enp0s8` n'apparaît pas du tout
 
 Là, en revanche, il y a un problème : l'Adaptateur 2 n'a pas été

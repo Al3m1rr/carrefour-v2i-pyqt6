@@ -209,7 +209,19 @@ if command -v ufw >/dev/null 2>&1; then
     ufw allow 22/tcp >/dev/null
 fi
 
-MON_IP=$(ip -o -4 addr show | awk '$2!="lo"{print $4}' | cut -d/ -f1 | tail -1)
+# Adresse a communiquer a l'autre VM : celle du reseau PRIVE, jamais celle
+# de la carte Internet (NAT, 10.0.2.x), identique sur toutes les VM et
+# injoignable depuis l'autre machine. On exclut donc la carte qui porte la
+# route par defaut.
+ROUTE_IF=$(ip route show default 2>/dev/null | awk '{print $5}' | head -1)
+MON_IP=$(ip -o -4 addr show | awk -v r="$ROUTE_IF" '$2!="lo" && $2!=r {print $4}' \
+         | cut -d/ -f1 | head -1)
+if [[ -z "$MON_IP" ]]; then
+    echo
+    echo " ATTENTION : aucune adresse sur le reseau prive."
+    echo " La carte privee n'est pas configuree : voir 'ip -brief addr'"
+    echo " et le guide (etape 3), avant de lancer l'autre VM."
+fi
 
 echo
 echo "=========================================================="

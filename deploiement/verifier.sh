@@ -58,6 +58,16 @@ fi
 echo "  Adresses de cette machine :"
 ip -brief addr show 2>/dev/null | grep -v '^lo' | sed 's/^/    /'
 
+# Une carte UP sans adresse IPv4 est le symptome typique d'un profil
+# NetworkManager absent ou partage entre deux cartes : chaque
+# "nmcli device connect" le deplace sur la carte demandee et l'autre
+# perd son adresse. Sur une VM a deux cartes, les deux doivent en avoir.
+for carte in $(ls /sys/class/net 2>/dev/null | grep -E '^(en|eth)'); do
+    if ! ip -4 addr show "$carte" 2>/dev/null | grep -q 'inet '; then
+        souci "$carte est active mais n'a aucune adresse IPv4  ->  voir l'etape 3 du guide (un profil NetworkManager par carte)"
+    fi
+done
+
 if [[ -n "$IP_AUTRE" ]]; then
     if ping -c 2 -W 3 "$IP_AUTRE" >/dev/null 2>&1; then
         ok "$IP_AUTRE joignable"
