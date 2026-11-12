@@ -267,31 +267,39 @@ Deux symptômes à connaître, tous deux constatés sur des VM de l'IUT :
 > sur la carte demandée, et l'autre carte perd son adresse. Réparer une
 > carte en casse alors une autre, d'où l'impression de tourner en rond.
 
-**La correction : un profil par carte.** Sur **chaque** VM :
+**La correction la plus simple : imposer des adresses fixes.** Plutôt
+que de réparer le DHCP, donnez à chaque VM son adresse privée avec
+`IP_LOCALE`, à l'étape 4.2. Le script crée alors un profil
+NetworkManager **lié à chaque carte**, neutralise le profil flottant
+fautif, et rend le tout permanent :
 
 ```bash
-sudo nmcli connection add type ethernet ifname enp0s3 con-name nat ipv4.method auto
+# Sur la VM1
+sudo IP_LOCALE=192.168.56.10 bash deploiement/installer_vm.sh moteur
 ```
 ```bash
-sudo nmcli connection add type ethernet ifname enp0s8 con-name prive ipv4.method auto ipv4.never-default yes
+# Sur la VM2
+sudo IP_LOCALE=192.168.56.11 IP_MOTEUR=192.168.56.10 bash deploiement/installer_vm.sh passerelle
 ```
-```bash
-sudo nmcli connection modify "Wired connection 1" connection.autoconnect no
-```
-```bash
-sudo nmcli connection up nat
-```
-```bash
-sudo nmcli connection up prive
-```
+
+Vous choisissez les adresses, elles ne bougent plus, et elles survivent
+au redémarrage. Contrôlez ensuite sur **chaque** VM :
+
 ```bash
 ip -brief addr
 ```
 
-Attendu : `enp0s3` en `10.0.2.x` **et** `enp0s8` en `192.168.56.x`, sur
-les deux VM en même temps. Si la troisième commande répond que le
-profil n'existe pas, ignorez-la. Le DHCP du réseau privé choisit les
-adresses : **utilisez celles que vous lisez**, pas celles de ce guide.
+Attendu : `enp0s3` en `10.0.2.x` **et** `enp0s8` à l'adresse demandée,
+sur les deux VM en même temps.
+
+> **Si `enp0s3` n'a aucune adresse** (ni Internet, ni `apt`, ni
+> `git clone`), réparez-la d'abord, sinon vous ne pourrez même pas
+> récupérer le projet :
+> ```bash
+> sudo nmcli device connect enp0s3
+> ```
+> C'est un dépannage temporaire : le script lui créera ensuite un
+> profil permanent.
 
 > **Si `sudo` répond « n'est pas dans le fichier sudoers »**, passez
 > root avec `su -`, puis `usermod -aG sudo <votre-utilisateur>`, puis

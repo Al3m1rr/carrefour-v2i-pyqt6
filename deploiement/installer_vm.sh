@@ -70,8 +70,19 @@ if [[ -n "${IP_LOCALE:-}" ]]; then
     # contraire une carte DEJA adressee designerait le NAT et casserait
     # l'acces Internet de la machine.
     ROUTE=$(ip route show default 2>/dev/null | awk '{print $5}' | head -1)
+    CARTES=$(ls /sys/class/net | grep -E '^(en|eth)')
+
+    # Sans route par defaut, le routage ne permet pas de distinguer la
+    # carte Internet de la carte privee : les deux peuvent etre sans
+    # adresse. On prend la derniere (enp0s8 vient apres enp0s3) et on le
+    # signale, plutot que de risquer de configurer la carte Internet.
+    if [[ -z "${CARTE:-}" && -z "$ROUTE" ]]; then
+        CARTE=$(echo "$CARTES" | tail -1)
+        echo "    Aucune route par defaut : carte privee supposee $CARTE."
+        echo "    Si c'est faux, relancez avec CARTE=<nom> devant la commande."
+    fi
     if [[ -z "${CARTE:-}" ]]; then
-        for i in $(ls /sys/class/net | grep -E '^(en|eth)'); do
+        for i in $CARTES; do
             [[ "$i" == "$ROUTE" ]] && continue          # jamais la carte Internet
             ip -4 addr show "$i" | grep -q 'inet ' && continue
             CARTE="$i"; break
@@ -79,7 +90,7 @@ if [[ -n "${IP_LOCALE:-}" ]]; then
     fi
     # Repli : la derniere carte qui n'est pas celle de la route par defaut.
     if [[ -z "${CARTE:-}" ]]; then
-        CARTE=$(ls /sys/class/net | grep -E '^(en|eth)' | grep -v "^${ROUTE}$" | tail -1)
+        CARTE=$(echo "$CARTES" | grep -v "^${ROUTE}$" | tail -1)
     fi
     if [[ -z "${CARTE:-}" ]]; then
         echo "    Aucune seconde carte reseau trouvee : etape ignoree." >&2
@@ -92,11 +103,45 @@ if [[ -n "${IP_LOCALE:-}" ]]; then
     echo "    IP_LOCALE demande : $IP_LOCALE sur $CARTE (Internet : ${ROUTE:-aucune})"
 
     if systemctl is-active --quiet NetworkManager; then
-        nmcli con add type ethernet ifname "$CARTE" con-name carrefour-prive \
-              ip4 "$IP_LOCALE/24" 2>/dev/null \
-            || nmcli con mod carrefour-prive ipv4.addresses "$IP_LOCALE/24" ipv4.method manual
-        nmcli con up carrefour-prive || true
-        echo "    Configure via NetworkManager"
+        # Les VM livrees avec un bureau n'ont souvent qu'un seul profil,
+        # lie a aucune carte. NetworkManager le deplace alors d'une carte
+        # a l'autre : configurer la carte privee fait perdre l'adresse de
+        # la carte Internet, et inversement. On le neutralise au profit
+        # de profils lies a une carte precise.
+        while IFS= read -r nom; do
+            [[ -z "$nom" || "$nom" == carrefour-* ]] && continue
+            if [[ -z "$(nmcli -g connection.interface-name connection show "$nom" 2>/dev/null)" ]]; then
+                nmcli connection modify "$nom" connection.autoconnect no 2>/dev/null || true
+                echo "    Profil flottant \"$nom\" desactive (il volait l'adresse)"
+            fi
+        done < <(nmcli -t -f NAME connection show 2>/dev/null)
+
+        # La carte Internet recoit son propre profil, sinon elle se
+        # retrouve sans adresse au prochain demarrage.
+        CARTE_NAT=$(echo "$CARTES" | grep -v "^${CARTE}$" | head -1)
+        if [[ -n "$CARTE_NAT" ]]; then
+            nmcli connection add type ethernet ifname "$CARTE_NAT" \
+                  con-name carrefour-nat ipv4.method auto \
+                  connection.autoconnect yes 2>/dev/null \
+              || nmcli connection modify carrefour-nat \
+                  connection.interface-name "$CARTE_NAT" 2>/dev/null || true
+            nmcli connection up carrefour-nat 2>/dev/null || true
+            echo "    Carte Internet $CARTE_NAT : profil carrefour-nat (DHCP)"
+        fi
+
+        # Le profil prive : adresse fixe et permanente. never-default
+        # l'empeche de capter la route par defaut, ce qui couperait
+        # l'acces Internet de la machine.
+        nmcli connection add type ethernet ifname "$CARTE" \
+              con-name carrefour-prive ipv4.method manual \
+              ipv4.addresses "$IP_LOCALE/24" ipv4.never-default yes \
+              connection.autoconnect yes 2>/dev/null \
+          || nmcli connection modify carrefour-prive \
+              connection.interface-name "$CARTE" ipv4.method manual \
+              ipv4.addresses "$IP_LOCALE/24" ipv4.never-default yes \
+              connection.autoconnect yes 2>/dev/null || true
+        nmcli connection up carrefour-prive 2>/dev/null || true
+        echo "    Configure via NetworkManager (profil carrefour-prive, permanent)"
     elif [[ -d /etc/network ]]; then
         # On retire toujours notre bloc precedent avant de le reecrire.
         # Se contenter de ne rien faire s'il existe deja laisserait en
