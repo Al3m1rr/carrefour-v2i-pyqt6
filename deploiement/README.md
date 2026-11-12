@@ -48,9 +48,11 @@ répartis sur deux machines.
 | VM1 | moteur de simulation | 5051 | `carrefour_moteur_db` |
 | VM2 | passerelle réseau | 5050 | `carrefour_stats_db` |
 
-Le client PyQt6 tourne **sur votre PC**, pas sur les VM : il se connecte
-à la VM2. (Vous pouvez aussi le lancer depuis une VM, à condition
-qu'elle ait un environnement graphique.)
+Le client PyQt6 tourne **sur votre PC** quand les VM n'ont pas de
+bureau : il se connecte alors à la VM2. Si vos VM sont fournies avec un
+environnement graphique, lancez-le plutôt **dans la VM2**, en visant
+`127.0.0.1` ; le [guide pas à pas](GUIDE_COMPLET.md) détaille les deux
+cas à l'étape 5.3.
 
 ### ⚠ Le risque principal : deux VM qui ne se voient pas
 

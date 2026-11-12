@@ -1,6 +1,7 @@
 __pycache__/
 *.pyc
 venv/
+venv-client/
 *.csv
 *.png
 identifiants_vm.local.txt

@@ -374,11 +374,35 @@ git clone https://github.com/Al3m1rr/carrefour-v2i-pyqt6.git
 cd carrefour-v2i-pyqt6
 ```
 
-> **`sudo : commande introuvable` ?** Vous aviez défini un mot de passe
-> root. Tapez `su -`, puis
-> `apt update && apt install -y sudo git`, puis
-> `usermod -aG sudo carrefour`, puis `exit`. Déconnectez-vous et
-> reconnectez-vous.
+> **`sudo : commande introuvable`**, ou **`<utilisateur> n'est pas dans
+> le fichier sudoers`** ? Passez root et donnez-lui les droits, en
+> remplaçant `carrefour` par votre identifiant :
+>
+> ```bash
+> su -
+> ```
+> ```bash
+> apt update && apt install -y sudo git
+> ```
+> ```bash
+> usermod -aG sudo carrefour
+> ```
+> ```bash
+> exit
+> ```
+>
+> ⚠ **Ouvrir un nouvel onglet de terminal ne suffit pas** pour que le
+> groupe `sudo` soit pris en compte : l'appartenance aux groupes est
+> fixée à l'ouverture de la **session**, et vos onglets héritent de la
+> session de bureau, démarrée avant la commande. Ouvrez donc une
+> session neuve :
+>
+> ```bash
+> su - carrefour
+> ```
+>
+> ou déconnectez-vous complètement du bureau puis reconnectez-vous.
+> Vérifiez avec `sudo -v`.
 
 ### 4.2 Provisionner
 
@@ -504,10 +528,57 @@ La ligne qui prouve que les deux VM communiquent :
 > réparez le réseau, elle se connecte **toute seule**, sans rien
 > relancer.
 
-### 5.3 Votre PC — l'interface graphique
+### 5.3 L'interface graphique
 
-L'interface ne tourne pas dans les VM, qui n'ont pas d'écran, mais sur
-votre PC. Dans un terminal **de votre PC** :
+Deux cas, selon vos VM.
+
+| Vos VM… | L'interface tourne… |
+|---|---|
+| n'ont pas de bureau (installation minimale) | **sur votre PC**, voir 5.3 a |
+| ont un bureau (VM fournies toutes prêtes) | **dans la VM2**, voir 5.3 b |
+
+#### 5.3 b — Dans la VM2, si elle a un bureau
+
+Ouvrez un **nouvel onglet de terminal** dans la VM2 : le premier est
+occupé par la passerelle.
+
+Le client a besoin de son **propre** environnement Python. Celui des
+serveurs ne contient pas PyQt6, volontairement, pour ne pas installer
+Qt sur une machine sans écran.
+
+```bash
+sudo apt install -y libxcb-cursor0 python3-venv
+```
+```bash
+cd ~/carrefour-v2i-pyqt6
+```
+```bash
+python3 -m venv venv-client && venv-client/bin/pip install -r requirements.txt
+```
+
+Comptez une à deux minutes. Puis, l'adresse étant locale ici :
+
+```bash
+CARREFOUR_SOCKET_SERVEUR_HOTE=127.0.0.1 venv-client/bin/python client/main_client.py
+```
+
+> ⚠ **Lancez le client depuis un terminal ouvert sur le bureau**, jamais
+> après un `su -` ou un `su - utilisateur`. Ces commandes ouvrent une
+> session neuve qui **perd la variable `DISPLAY`**, et Qt échoue avec
+> `qt.qpa.xcb: could not connect to display`. Le message suivant, à
+> propos de `libxcb-cursor0`, est trompeur : il s'affiche même quand le
+> paquet est installé.
+>
+> Vérifiez avec `echo $DISPLAY` : la réponse doit être `:0` ou `:1`, pas
+> une ligne vide. Si vous êtes dans une session imbriquée, tapez `exit`
+> pour revenir au terminal du bureau. En dernier recours,
+> `export DISPLAY=:0`.
+
+Passez directement à l'étape 5.4.
+
+#### 5.3 a — Sur votre PC, si les VM n'ont pas de bureau
+
+Dans un terminal **de votre PC** :
 
 ```bash
 git clone https://github.com/Al3m1rr/carrefour-v2i-pyqt6.git
@@ -638,6 +709,11 @@ double, la troisième tout le reste.
 | Ce que vous voyez | Cause et solution |
 |---|---|
 | `Destination Host Unreachable` au ping | **Le plus fréquent** : l'étape 4.2 n'a été faite que sur une seule VM. Faites-la sur l'autre |
+| `qt.qpa.xcb: could not connect to display` | Vous lancez le client depuis une session ouverte par `su`, qui perd `DISPLAY`. Tapez `exit`, ou `export DISPLAY=:0`. Le message sur `libxcb-cursor0` qui suit est trompeur |
+| Une carte est `UP` mais sans adresse IPv4 | Profil NetworkManager flottant : voir *VM déjà fournies avec un bureau* à l'étape 3 |
+| `Could not resolve host: github.com` | La carte Internet a perdu son adresse : `sudo nmcli device connect enp0s3` |
+| `<utilisateur> n'est pas dans le fichier sudoers` | Voir l'encadré en 4.1. Après `usermod`, ouvrez une **session neuve** : un nouvel onglet ne suffit pas |
+| Vous avez lancé le mauvais rôle sur une VM | Relancez le bon rôle, le script écrase la configuration. Puis supprimez la base en trop, sinon la preuve de répartition par `SHOW DATABASES` ne tient plus : `sudo mariadb -e "DROP DATABASE IF EXISTS carrefour_stats_db;"` sur la VM1, ou `carrefour_moteur_db` sur la VM2 |
 | `192.168.56.x` présent sur `enp0s3` | Adresse privée posée sur la carte Internet : deux routes concurrentes, la VM devient invisible. Relancez l'étape 4.2, le script répare |
 | `ip route` montre deux lignes `192.168.56.0/24` | Même cause que ci-dessus |
 | L'interface affiche « Mode dégradé » | La passerelle n'est pas lancée sur la VM2, ou mauvaise adresse dans `CARREFOUR_SOCKET_SERVEUR_HOTE` |
