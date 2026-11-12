@@ -9,7 +9,7 @@ Utilisation :
 Exemples :
     python ambulance/main_ambulance.py                         # tout par défaut
     python ambulance/main_ambulance.py 127.0.0.1 5050 1 N     # P1 depuis le nord
-    python ambulance/main_ambulance.py 192.168.56.10 5050 2 W  # P2 depuis l'ouest (VM)
+    python ambulance/main_ambulance.py 192.168.56.11 5050 2 W  # P2 depuis l'ouest, vers la passerelle (VM2)
 """
 
 import os
@@ -100,7 +100,8 @@ def envoyer_alerte(hote, port, priorite, branche):
 
     except ConnectionRefusedError:
         print(f"  ❌ Impossible de joindre le serveur ({hote}:{port}).")
-        print("     Vérifiez que le serveur est lancé (LANCER_SERVEUR.bat ou main_serveur.py).")
+        print("     Vérifiez que la passerelle est lancée sur la VM2 "
+              "(./deploiement/demarrer.sh passerelle).")
         sys.exit(1)
     except Exception as e:
         print(f"  ❌ Erreur : {e}")

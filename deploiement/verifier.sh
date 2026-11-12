@@ -64,7 +64,7 @@ ip -brief addr show 2>/dev/null | grep -v '^lo' | sed 's/^/    /'
 # perd son adresse. Sur une VM a deux cartes, les deux doivent en avoir.
 for carte in $(ls /sys/class/net 2>/dev/null | grep -E '^(en|eth)'); do
     if ! ip -4 addr show "$carte" 2>/dev/null | grep -q 'inet '; then
-        souci "$carte est active mais n'a aucune adresse IPv4  ->  voir l'etape 3 du guide (un profil NetworkManager par carte)"
+        souci "$carte est active mais n'a aucune adresse IPv4  ->  refaites l'etape 2 du guide avec IP_LOCALE (un profil NetworkManager par carte)"
     fi
 done
 

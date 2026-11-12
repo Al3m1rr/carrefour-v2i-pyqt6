@@ -16,45 +16,22 @@ réseau et la sienne (voir *Architecture répartie* plus bas).
 
 ---
 
-## ▶ Démarrage rapide (5 minutes, sans VM)
+## ▶ Déploiement
 
-Pour voir le projet fonctionner tout de suite, sur une seule machine.
-Les trois rôles tournent en local et dialoguent par sockets, exactement
-comme ils le feraient à travers le réseau.
+Le projet se déploie sur **deux machines virtuelles Debian 13 dotées
+d'un bureau**, sous VirtualBox, sur un poste de l'IUT. **Aucune VM n'est
+à installer ni à configurer depuis zéro** : la VM `Debian13_FR` est à
+récupérer dans le dossier réseau **Commun**, puis à copier dans
+**temp**.
 
-**Prérequis : Python 3.11 ou plus récent** (`python3 --version`). Les
-versions des dépendances sont figées, comme l'exige la consigne, et ne
-s'installeront pas sur une version antérieure.
+👉 **[Guide de déploiement pas à pas](deploiement/GUIDE_DEPLOIEMENT.md)**
+— environ 30 minutes, à dérouler de haut en bas, avec un point de
+contrôle après chaque étape critique.
 
-```bash
-git clone https://github.com/Al3m1rr/carrefour-v2i-pyqt6.git
-cd carrefour-v2i-pyqt6
-python3 -m venv venv
-source venv/bin/activate          # Windows : venv\Scripts\activate
-pip install -r requirements.txt
-```
-
-Puis lancez les trois rôles d'un coup :
-
-- **Windows** : double-cliquez sur `LANCER_TOUT.bat`
-- **Linux / macOS** : `./lancer_local.sh`
-
-MariaDB n'est **pas nécessaire** pour cette démonstration : en son
-absence la simulation tourne sans enregistrement et le signale au
-démarrage.
-
-> **Pour le déploiement réel sur les deux VM Debian**, qui est
-> l'architecture du projet :
->
-> - 🧾 **[Fiche de déploiement — VM fournies toutes prêtes](deploiement/FICHE_VM_FOURNIES.md)**
->   — vos deux VM Debian existent déjà et ont un bureau : une page
->   linéaire, à dérouler de haut en bas, 25 minutes.
-> - 📘 **[Guide pas à pas — objectif 30 minutes](deploiement/GUIDE_COMPLET.md)**
->   — du téléchargement de l'ISO Debian à la simulation à l'écran :
->   création des VM, installation écran par écran, réseau, déploiement
->   et vérification. Aucune connaissance de Linux requise.
-> - ⚡ [Guide condensé](deploiement/README.md) — si vous avez déjà deux
->   VM Debian et l'habitude de Linux.
+En résumé : on récupère la VM, on en obtient une seconde par clonage,
+puis, sur chacune, on clone ce dépôt et on lance un script qui installe
+MariaDB, crée la base du rôle et fixe l'adresse réseau. Le moteur tourne
+alors sur la VM1, la passerelle et l'interface sur la VM2.
 
 ---
 
@@ -274,7 +251,7 @@ Le projet ne tourne pas sur une seule machine : les **processus** et les
   └──────────────────────────────┘      └──────────────┬───────────────┘
                                                        │ 5050
                                   ┌────────────────────┴───────────────┐
-                                  │  Clients (PC hôte ou 3e machine)   │
+                                  │  Clients, lancés dans la VM2       │
                                   │   · main_client.py   (PyQt6)       │
                                   │   · main_ambulance.py (boîtier V2I)│
                                   └────────────────────────────────────┘
@@ -302,75 +279,74 @@ La liaison VM1 ↔ VM2 réutilise le **même protocole JSON sur sockets
 bruts** que les clients, conformément à la contrainte « coder la couche
 transport/session soi-même ».
 
-## Installation
+## Installation et usage
 
-### Récupérer le projet
+> Le détail pas à pas, avec les sorties attendues et le dépannage, est
+> dans le **[guide de déploiement](deploiement/GUIDE_DEPLOIEMENT.md)**.
+> Ce chapitre en donne la trame.
+
+**Prérequis** : deux VM Debian 13 avec bureau sous VirtualBox, chacune
+dotée de deux cartes réseau (NAT et réseau privé hôte), et un
+utilisateur membre du groupe `sudo`. Python 3.11 ou plus récent (Debian
+13 fournit la 3.13). Les versions des dépendances sont figées dans
+`requirements-serveur.txt` (VM1 et VM2) et `requirements.txt`
+(interface), comme l'exige la consigne.
+
+### 1. Récupérer le projet, sur les deux VM
 
 ```bash
 git clone https://github.com/Al3m1rr/carrefour-v2i-pyqt6.git
 cd carrefour-v2i-pyqt6
-python3 -m venv venv
-source venv/bin/activate          # Windows : venv\Scripts\activate
-pip install -r requirements.txt
 ```
 
-### VM1 « Simulation » (Debian 13)
+### 2. Provisionner chaque VM
+
+Le script installe MariaDB, crée la base propre au rôle, prépare
+l'environnement Python des serveurs (`venv`) et fixe l'adresse privée de
+façon permanente.
 
 ```bash
-sudo apt install -y mariadb-server python3 python3-venv
-sudo mariadb < database/schema_moteur.sql
-sudo mariadb -e "CREATE USER IF NOT EXISTS 'carrefour_user'@'localhost' IDENTIFIED BY 'votre_mot_de_passe';
-                 GRANT ALL ON carrefour_moteur_db.* TO 'carrefour_user'@'localhost'; FLUSH PRIVILEGES;"
-
-export CARREFOUR_DB_MOTEUR_PASSWORD="votre_mot_de_passe"
-export CARREFOUR_MOTEUR_ECOUTE="0.0.0.0"
-
-python3 serveur/main_moteur.py
+# VM1 — moteur de simulation
+sudo IP_LOCALE=192.168.56.10 bash deploiement/installer_vm.sh moteur
+```
+```bash
+# VM2 — passerelle réseau
+sudo IP_LOCALE=192.168.56.11 IP_MOTEUR=192.168.56.10 bash deploiement/installer_vm.sh passerelle
 ```
 
-### VM2 « Passerelle » (Debian 13)
+### 3. Démarrer, la VM1 d'abord
 
 ```bash
-sudo apt install -y mariadb-server python3 python3-venv
-sudo mariadb < database/schema_passerelle.sql
-sudo mariadb -e "CREATE USER IF NOT EXISTS 'carrefour_user'@'localhost' IDENTIFIED BY 'votre_mot_de_passe';
-                 GRANT ALL ON carrefour_stats_db.* TO 'carrefour_user'@'localhost'; FLUSH PRIVILEGES;"
-
-export CARREFOUR_DB_PASSERELLE_PASSWORD="votre_mot_de_passe"
-export CARREFOUR_MOTEUR_HOTE="192.168.56.10"    # IP host-only de la VM1
-export CARREFOUR_SOCKET_ECOUTE="0.0.0.0"
-
-python3 serveur/main_passerelle.py
+./deploiement/demarrer.sh moteur        # sur la VM1
+```
+```bash
+./deploiement/demarrer.sh passerelle    # sur la VM2
 ```
 
-### Poste client (interface PyQt6)
+### 4. Lancer l'interface, dans la VM2
+
+Le client PyQt6 a son propre environnement Python, distinct de celui des
+serveurs :
 
 ```bash
-export CARREFOUR_SOCKET_SERVEUR_HOTE="192.168.56.11"   # IP de la VM2
-python3 client/main_client.py
+sudo apt install -y libxcb-cursor0 python3-venv
+python3 -m venv venv-client
+venv-client/bin/pip install -r requirements.txt
+```
+```bash
+CARREFOUR_SOCKET_SERVEUR_HOTE=127.0.0.1 venv-client/bin/python client/main_client.py
 ```
 
-L'application ambulance, qui simule le boîtier embarqué, se lance de la
-même façon et vise également la VM2 :
+À lancer depuis un terminal ouvert sur le bureau, pas après un `su`.
+
+### 5. Déclencher une alerte avec le boîtier ambulance (facultatif)
+
+Le boîtier simule un véhicule d'urgence et émet une alerte V2I signée.
+Dans la VM2 :
 
 ```bash
-python3 ambulance/main_ambulance.py 192.168.56.11 5050 1 N   # alerte P1 depuis le nord
+python3 ambulance/main_ambulance.py 127.0.0.1 5050 1 N   # alerte P1 depuis le nord
 ```
-
-> **Vous voulez juste tester le projet ?** Le guide
-> [deploiement/README.md](deploiement/README.md) donne deux chemins :
-> tout sur un seul PC en 5 minutes, ou le déploiement complet sur deux
-> VM Debian avec des scripts automatisés.
-
-### Tout faire tourner sur un seul PC (démonstration rapide)
-
-Sous Windows, `LANCER_TOUT.bat` ouvre les trois rôles dans trois
-fenêtres (moteur, passerelle, client) en 127.0.0.1. Les bases ne sont
-alors pas nécessaires : si MariaDB est absent, la simulation tourne
-sans enregistrement et l'affiche au démarrage.
-
-Pour les lancer séparément : `LANCER_MOTEUR.bat`, puis
-`LANCER_PASSERELLE.bat`, puis `LANCER_CLIENT.bat`.
 
 ### Variables d'environnement disponibles
 
@@ -410,7 +386,7 @@ reseau/client_moteur.py       client TCP vers la VM1, avec reconnexion
 database/schema_passerelle.sql
                               table session_simulation
 
-── exécuté sur le poste client ──────────────────────────────────────
+── clients, lancés dans la VM2 ──────────────────────────────────────
 client/
   main_client.py              point d'entrée de l'interface
   fenetre_principale.py       IHM + tableau de bord (signaux/slots)

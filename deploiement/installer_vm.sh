@@ -2,7 +2,7 @@
 # Provisionne une des deux VM Debian 13 du projet "Carrefour intelligent".
 #
 # A executer DANS la VM concernee, apres une installation Debian 13
-# standard (voir deploiement/creer_vms.ps1 pour la creation des VM).
+# standard (voir deploiement/GUIDE_DEPLOIEMENT.md).
 #
 # Usage :
 #     sudo bash deploiement/installer_vm.sh moteur       # sur la VM1
@@ -265,7 +265,7 @@ if [[ -z "$MON_IP" ]]; then
     echo
     echo " ATTENTION : aucune adresse sur le reseau prive."
     echo " La carte privee n'est pas configuree : voir 'ip -brief addr'"
-    echo " et le guide (etape 3), avant de lancer l'autre VM."
+    echo " puis relancez ce script avec IP_LOCALE=<adresse> (etape 2 du guide)."
 fi
 
 echo
