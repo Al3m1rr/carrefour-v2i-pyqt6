@@ -7,102 +7,115 @@ Groupe « Python Mayo » — Atakan Gocer · Louise Halter-Tisler
 
 ## 1. Bilan des fonctionnalités mises en œuvre
 
-> ⚠️ **À compléter avant le rendu** : cette revue est organisée par
-> thème, à partir de ce qui a été livré. Il reste à la confronter ligne
-> à ligne au tableau MoSCoW du cahier des charges déposé le 24
-> septembre, pour vérifier qu'aucune fonctionnalité promise n'est
-> oubliée et que le classement Must / Should correspond.
+Cette revue confronte, ligne à ligne, le livrable au périmètre du
+cahier des charges déposé le 24 septembre 2026. Celui-ci classait 24
+fonctionnalités selon la méthode MoSCoW. Seules les 16 classées *Must*
+et *Should*, soit 100 heures estimées, constituaient un engagement.
 
-### Pleinement fonctionnel
+### Synthèse
 
-**La simulation du carrefour.** Quatre branches, voies entrantes et
-sortantes distinctes, feux tricolores avec phase de dégagement « tout
-rouge », passages piétons en deux demi-traversées et bande cyclable
-séparée.
+| Catégorie | Prévues | Fait | Partiel | Non fait |
+|---|---|---|---|---|
+| Must have | 10 | 10 | 0 | 0 |
+| Should have | 6 | 5 | 1 | 0 |
+| **Engagé (Must + Should)** | **16** | **15** | **1** | **0** |
+| Could have | 4 | 0 | 1 | 3 |
+| Won't have | 4 | exclues du périmètre, aucune développée | | |
 
-**Les quatre types d'usagers** demandés : véhicules avec conducteur,
-véhicules autonomes, cyclistes et piétons. Les autonomes se
-distinguent réellement : ils détectent l'alerte d'urgence deux fois
-plus tôt et se rangent plus précisément.
+**Tout le périmètre engagé a été livré**, une seule fonctionnalité
+l'étant partiellement. Sur les quatre *Could have*, une l'est en partie
+et trois ne l'ont pas été.
 
-**Le respect du code de la route.** Distance de sécurité et freinage
-progressif, freinage plus fort que l'accélération, arrêt à la ligne,
-orange franchi seulement si l'arrêt est impossible, priorité au piéton
-engagé, refus de priorité en tourne-à-gauche (article R415-5),
-interdiction de bloquer le carrefour.
+### Revue fonctionnalité par fonctionnalité
 
-**La priorité aux véhicules d'urgence**, par quatre mécanismes
-combinés : voie réservée avec déviation du trafic, préemption des feux,
-alerte anticipée douze secondes avant l'arrivée, et serrage à droite
-des usagers.
+| Fonctionnalité | Priorité | Statut | Ce qui a été livré |
+|---|---|---|---|
+| Moteur de simulation | Must | **Fait** | Simulation à 30 pas par seconde : usagers, trajectoires avec virages, dynamique avec freinage plus fort que l'accélération |
+| Géométrie et Code de la route | Must | **Fait** | Voies entrante et sortante distinctes, arrêt à la ligne, priorité au piéton engagé, refus de priorité en tourne-à-gauche (R415-5), interdiction de bloquer le carrefour |
+| Feux avec phase de dégagement | Must | **Fait** | Cycle vert, orange, « tout rouge » entre deux axes |
+| Protocole applicatif sur sockets TCP | Must | **Fait** | Messages JSON sur une ligne, découpés par un délimiteur, avec conservation du message incomplet (`protocole.py`, 48 lignes) |
+| Serveur multi-clients | Must | **Fait** | Un thread de lecture par client et une file thread-safe ; la même classe sert sur les deux VM |
+| IHM PyQt6 | Must | **Fait** | `QGraphicsScene` : routes, usagers orientés, feux, passages piétons, panneaux dynamiques |
+| Thread réseau Qt | Must | **Fait** | `QThread` et `pyqtSignal` ; aucun widget n'est touché hors du thread principal |
+| Persistance MariaDB | Must | **Fait** | Schéma, DAO et historique des usagers. Seuls les accidents sont journalisés dans la table des événements |
+| Centrale V2I | Must | **Fait** | Voie réservée, forçage des feux, déviation des usagers gênants, jamais d'un véhicule déjà engagé |
+| Alertes anticipées et priorités | Must | **Fait** | Alerte douze secondes avant l'arrivée, niveaux P1 à P3, arbitrage entre urgences concurrentes |
+| Serrage à droite | Should | **Fait** | Décalage latéral, ralentissement, feux de détresse ; trois garde-fous issus de l'observation |
+| Tableau de bord et métriques | Should | **Fait** | Collisions, déviations forcées, temps moyen des urgences et des véhicules ordinaires, alertes en cours |
+| Commandes opérateur | Should | **Fait** | Ajout et retrait de chaque type d'usager, choix du niveau de priorité des alertes |
+| Étude comparative | Should | **Fait** | Cinq configurations mesurées sur des situations de trafic identiques (graine fixée), résultats en CSV et en graphique |
+| Authentification HMAC des alertes | Should | **Fait** | Signature HMAC-SHA256 des alertes du boîtier ambulance ; une alerte à signature invalide est rejetée |
+| Mode dégradé en cas de perte réseau | Should | **Partiel** | Le client détecte la perte, passe en rouge, désactive ses boutons et se reconnecte seul ; la passerelle prévient aussi les clients quand le moteur tombe. La bascule des feux en cycle fixe n'est pas simulée |
+| Export des statistiques | Could | **Partiel** | Fait pour l'étude comparative (CSV et histogramme PNG). Les statistiques de session restent consultables en base, sans export |
+| Comportement des véhicules autonomes | Could | **Non fait** | Ils existent comme type (35 % du trafic, affichés en orange) mais conduisent exactement comme les véhicules ordinaires |
+| Taux de non-respect paramétrable | Could | **Non fait** | Tous les usagers respectent les règles |
+| Latence et pertes réseau simulées | Could | **Non fait** | Seule la coupure franche est gérée, avec reconnexion automatique |
+| Enchaînement de plusieurs carrefours | Won't | Exclu | Respecté : un seul carrefour |
+| Déploiement sur matériel réel | Won't | Exclu | Respecté |
+| Cartographie réelle de Mulhouse | Won't | Exclu | Respecté : carrefour générique |
+| Rendu 3D | Won't | Exclu | Respecté : vue de dessus 2D |
 
-**Les niveaux de priorité P1 à P3** avec arbitrage entre urgences
-concurrentes : la plus prioritaire d'abord, à priorité égale la
-première arrivée, réattribution possible tant que le bénéficiaire n'est
-pas arrivé, et partage de la voie entre itinéraires compatibles.
+### Ce qui a changé par rapport au cahier des charges
 
-**L'architecture répartie** sur deux machines : moteur et base des
-usagers sur la première, passerelle et base des sessions sur la
-seconde, liaison par sockets TCP avec protocole JSON écrit par nous.
+**La répartition sur les machines virtuelles.** Le cahier des charges
+prévoyait une *VM Serveur* portant le moteur, la centrale V2I, le
+serveur de sockets et la base, et une *VM Client* portant l'interface.
+Le client ayant demandé de répartir les **processus et les bases**, nous
+avons scindé le serveur : la VM1 porte le moteur et la base des
+usagers, la VM2 porte la passerelle réseau et la base des sessions,
+liées par un socket TCP interne. L'interface tourne désormais dans la
+VM2. La base unique à trois tables est devenue deux bases.
 
-**L'interface de supervision** en PyQt6 : vue du carrefour, tableau de
-bord, ajout et retrait d'usagers par type, choix du niveau de priorité
-des alertes.
+**Le système d'exploitation.** Ubuntu 24.04 était prévu ; le
+déploiement s'est fait sur Debian 13, imposée pour les machines
+virtuelles.
 
-**La persistance** dans deux bases MariaDB réparties, avec dégradation
-propre si une base est absente.
+**La gestion de version.** Git et GitHub étaient prévus dès le jalon
+J2, avec une convention de branches. Le dépôt n'a été créé que le 8
+novembre, et il n'existe qu'une branche. Avant cette date, les versions
+circulaient sous forme d'archives. Les messages de commit sont en
+revanche explicites, comme demandé.
 
-**L'étude comparative** automatisée, qui mesure cinq configurations sur
-des situations de trafic identiques.
+**Les tests.** Le cahier des charges promettait des scénarios de test
+rejouables à graine fixée pour les chemins critiques du moteur. Seule
+l'étude comparative fixe ses graines et rejoue les mêmes situations ;
+nous n'avons écrit aucun test automatisé avec vérification de résultat.
 
-**Deux fonctions de sécurité** non exigées mais pertinentes : signature
-HMAC-SHA256 des alertes du boîtier embarqué, et mode dégradé du client
-lorsque la liaison réseau est perdue.
+**L'exécution sur un seul poste**, prévue comme repli en cas de panne
+de VM, reste possible en pointant les variables d'environnement vers
+`127.0.0.1`, mais nous ne la documentons plus : nous avons préféré un
+unique parcours de déploiement, celui des postes de l'IUT.
 
-### Modifié en cours de route
+### Ce qui n'a pas été développé, et pourquoi
 
-**La bibliothèque graphique.** Le premier prototype utilisait Pygame.
-Le cahier des charges imposant PyQt6 et interdisant Pygame, toute la
-couche technique a été réécrite, la logique métier étant conservée.
+**Les trois *Could have* restants** étaient conditionnés à la livraison
+complète des *Must* et des *Should*. Une fois celle-ci acquise, le temps
+disponible a été absorbé par le déploiement réparti, bien plus coûteux
+que prévu.
 
-**La répartition sur les VM.** Le montage initial plaçait le moteur, le
-serveur socket et la base sur une seule machine, la seconde ne portant
-que l'interface. Le client ayant demandé une répartition des processus
-*et* des bases, l'application a été scindée en deux processus distincts
-avec une base chacun.
+**Les tests automatisés.** C'est la lacune que nous regrettons le plus.
+Elle nous a interdit de refactorer le code en fin de projet, faute de
+pouvoir vérifier rapidement que rien n'était cassé.
 
-**L'ouverture du couloir prioritaire.** Initialement déclenchée à
-l'apparition du véhicule, elle l'est désormais par une alerte émise
-douze secondes avant son arrivée. Les mesures ont montré que la voie
-n'avait pas le temps de se vider autrement.
+**Le coût réel pour le reste du trafic.** Le cahier des charges posait
+la question « quel gain, et à quel prix pour le reste du trafic ? ». Nous
+mesurons précisément le gain, mais le prix n'est mesuré qu'en nombre de
+collisions et de déviations forcées. Nous n'avons pas comparé le temps de
+traversée des usagers ordinaires d'une configuration à l'autre. C'est la
+principale limite de nos conclusions.
 
-### Non développé, et pourquoi
+**Des limites que nous avions identifiées nous-mêmes**, sans qu'elles
+figurent au cahier des charges :
 
-**La déviation vers la branche la moins chargée.** Les usagers déviés
-sont envoyés vers une sortie tirée au hasard. Mesurer la charge de
-chaque branche pour choisir la moins encombrée était à notre portée,
-mais nous avons priorisé la fiabilité du déploiement réparti.
-
-**Un quota anti-famine** pour l'axe perpendiculaire. La durée maximale
-d'un couloir est plafonnée à trente secondes, ce qui limite le
-problème sans le traiter formellement.
-
-**La réservation d'intersection.** Elle remplacerait les garde-fous
-empiriques actuels et supprimerait probablement les collisions
-résiduelles. Chantier trop important pour le temps imparti.
-
-**Les tests automatisés.** Toutes nos validations sont manuelles. C'est
-la lacune que nous regrettons le plus : elle nous a interdit de
-refactorer le code en fin de projet, faute de pouvoir vérifier
-rapidement que rien n'était cassé.
-
-**La calibration en unités réelles.** Les distances sont en pixels et
-le temps en ticks. Les débits sont calibrés pour rester sous la
-capacité réelle d'un carrefour à feux, mais nos résultats restent des
-comparaisons relatives, non des temps transposables tels quels.
-
-**Plusieurs carrefours enchaînés**, qui auraient permis de montrer le
-report de trafic provoqué par les déviations.
+- les usagers déviés sont envoyés vers une sortie tirée au hasard, et
+  non vers la branche la moins chargée ;
+- la durée d'un couloir est plafonnée à trente secondes, ce qui limite
+  la famine de l'axe perpendiculaire sans la traiter formellement ;
+- les distances sont en pixels et le temps en ticks : nos résultats sont
+  des comparaisons relatives, non des durées transposables telles quelles ;
+- une réservation d'intersection remplacerait les garde-fous empiriques
+  actuels et supprimerait probablement les collisions résiduelles,
+  environ cinq pour 12 000 ticks.
 
 ---
 
@@ -194,10 +207,9 @@ sur deux machines presque mécanique le jour où il a fallu le faire.
 
 ## 3. Conclusion organisationnelle
 
-> ⚠️ **À compléter** : la répartition réelle des tâches entre nous deux
-> doit être reprise des comptes rendus hebdomadaires. Les éléments
-> ci-dessous décrivent la méthode de travail, pas le détail de qui a
-> fait quoi.
+> ⚠️ **À compléter** : indiquer qui a pris en charge quelles parties
+> du code et des documents. Les éléments ci-dessous décrivent notre
+> méthode de travail et nos contraintes d'emploi du temps.
 
 ### Notre méthode de travail
 
@@ -210,6 +222,15 @@ avancé moins vite que si nous nous étions répartis les modules.
 
 Les rôles de cabinet conseil et de cabinet développement, évoqués dans
 la fiche de cadrage, n'ont pas été distingués en pratique.
+
+### Des emplois du temps différents
+
+Nous ne sommes pas dans le même groupe de travaux pratiques : Atakan
+relève de RoM et Louise de DevCloud. Nos séances d'autonomie
+n'étaient donc pas les mêmes. Atakan, en alternance du 5 octobre au 2
+novembre, n'en avait aucune sur cette période, alors que Louise en
+disposait. Cette asymétrie a pesé sur le rythme du projet, et une part
+importante du travail d'Atakan s'est faite en dehors des séances.
 
 ### L'usage de l'IA dans notre organisation
 
@@ -227,11 +248,6 @@ machines virtuelles.
 ---
 
 ## 4. Analyse du planning
-
-> ⚠️ **À compléter avant le rendu** : les volumes horaires exacts
-> doivent être repris des comptes rendus hebdomadaires, qui seuls font
-> foi. Le tableau ci-dessous situe les jalons à partir des traces du
-> dépôt et des dates de livraison.
 
 ### Le planning prévisionnel
 
@@ -297,46 +313,73 @@ lire un cahier des charges, revenir sur une décision, installer,
 déboguer, documenter. Ces activités ont pesé plus lourd que l'écriture
 du code elle-même.
 
-### Le déroulement réel
+### Le déroulement réel face aux jalons
 
-| Période | Ce qui s'est passé |
-|---|---|
-| Semaine du 8 sept. | Analyse du besoin, préparation des questions au client |
-| Semaine du 15 sept. | Premier prototype, puis **réécriture complète** après lecture du cahier des charges imposant PyQt6 |
-| 24 sept. | Dépôt du cahier des charges |
-| Fin sept. – octobre | Logique métier : voie réservée, alertes anticipées, niveaux de priorité, serrage à droite |
-| Octobre | Analyse critique, puis construction de l'étude comparative |
-| 2 oct. | Dernières fonctionnalités : application ambulance, signature HMAC, mode dégradé |
-| 8 nov. | **Répartition sur deux VM**, premier déploiement réel |
-| 12 nov. | Déploiement sur les postes de l'IUT, correction des scripts |
-| 13 nov. | Documentation technique, bilan, IA-graphie |
-| 15 nov. | Rendu |
+| Jalon | Prévu | Réalisé | Écart |
+|---|---|---|---|
+| J1 — Cahier des charges | 24 sept. | Déposé le 24 sept. | Tenu |
+| J2 — Environnement (VM, réseau, MariaDB, dépôt Git) | S40 | VM, réseau et base en septembre ; **dépôt Git le 8 novembre** | Cinq semaines de retard sur le dépôt |
+| J3 — Noyau de simulation | S42 | Dès la semaine 38 | Environ quatre semaines d'avance |
+| J4 — Sockets et IHM PyQt6 | S44 | Vers le 18 sept., semaine 38 | Environ six semaines d'avance |
+| J5 — Priorisation V2I complète | S45 | Semaines 39 et 40, d'après l'historique de conception | Environ cinq semaines d'avance |
+| J6 — Tests, mesures, corrections | S46 | Mesures comparatives en septembre ; corrections de déploiement en novembre ; **aucun test automatisé** | Mesures en avance, tests non réalisés |
+| J7 — Livraison finale | 15 nov. | Dépôt, documentation, bilan, IA-graphie | Soutenance à confirmer |
+
+Le Gantt prévoyait un effort réparti de la semaine 39 à la semaine 46, avec
+le pic de priorisation V2I en semaines 43 et 44 puis les tests en
+semaines 45 et 46. La charge s'est en réalité concentrée en **deux
+blocs** : les semaines 37 à 40, où l'essentiel du développement a eu
+lieu, puis les semaines 45 et 46, consacrées au déploiement et à la
+documentation.
+
+Entre les deux, la logique métier n'a pas évolué : le code livré
+correspond à l'état du 2 octobre. Atakan était en alternance du 5
+octobre au 2 novembre, sans séance d'autonomie, alors que Louise en
+disposait sur cette période.
 
 ### Les écarts et leurs causes
 
 **La réécriture de la mi-septembre.** Le prototype Pygame a été
-entièrement refait en PyQt6 avec des sockets. La cause est
-identifiable : nous avons commencé à produire du code avant d'avoir lu
-et transmis le cahier des charges. La logique métier a pu être
-conservée, ce qui a limité la perte, mais toute la couche technique
-était à refaire.
+entièrement refait en PyQt6 avec des sockets. La cause est identifiable :
+nous avons commencé à produire du code avant d'avoir lu et transmis le
+cahier des charges. La logique métier a pu être conservée, ce qui a
+limité la perte, mais toute la couche technique était à refaire.
 
-**La répartition sur deux VM, tardive.** Elle n'est intervenue qu'au
-8 novembre, alors que c'est une exigence structurante du sujet. Jusque-
-là, le projet tournait sur une seule machine. Ce report a concentré en
-fin de projet un travail d'architecture et de déploiement qui a révélé
-des bugs — ceux-là mêmes qui nous ont pris le plus de temps. Les
-découvrir en septembre aurait été nettement plus confortable.
+**Une avance qui a masqué un retard.** Le périmètre fonctionnel était
+complet dès le 2 octobre, cinq semaines avant le jalon. Cette avance nous
+a donné le sentiment que le reste suivrait, alors que le plus lourd
+restait à faire : le déploiement réparti, exigence structurante du sujet.
 
-**Le déploiement, largement sous-estimé.** Nous avions prévu
-l'installation comme une formalité. Elle a occupé deux journées
-entières, pour des raisons qui n'avaient rien à voir avec notre code :
-profils réseau des machines virtuelles, droits `sudo`, variables
-d'environnement graphiques. C'est l'enseignement principal de notre
-planning : **le temps de mise en production ne se devine pas**, il
-s'éprouve.
+**La répartition sur deux VM, tardive.** Elle n'est intervenue qu'au 8
+novembre. Jusque-là, le projet tournait sur une seule machine. Ce report
+a concentré en fin de projet un travail d'architecture et de déploiement
+qui a révélé des bugs, ceux-là mêmes qui nous ont pris le plus de temps.
+Les découvrir en septembre aurait été nettement plus confortable.
 
-**Le temps consacré à la documentation.** Nous l'avons concentré sur
-les derniers jours. Rédigée au fil de l'eau, elle aurait été plus
-fidèle, notamment sur les décisions de conception dont nous avons dû
-retrouver les raisons a posteriori.
+**Le déploiement, largement sous-estimé.** Nous l'avions prévu comme une
+formalité. Il a occupé plusieurs journées, pour des raisons étrangères à
+notre code : profils réseau des machines virtuelles, droits `sudo`,
+variables d'environnement graphiques. C'est l'enseignement principal de
+notre planning : **le temps de mise en production ne se devine pas, il
+s'éprouve**.
+
+**Un dépôt tardif.** Faute de dépôt Git avant le 8 novembre, l'historique
+du dépôt ne reflète que les dernières semaines du projet, non sa durée
+réelle. C'est aussi ce qui nous a privés du suivi de version que le
+cahier des charges annonçait pour le jalon J2.
+
+**La documentation, concentrée sur les derniers jours.** Rédigée au fil
+de l'eau, elle aurait été plus fidèle, notamment sur les décisions de
+conception dont nous avons dû retrouver les raisons a posteriori.
+
+### La gestion des risques, avec le recul
+
+| Risque prévu | S'est-il produit ? | Mesures prévues | Ce qui s'est passé |
+|---|---|---|---|
+| Retard sur le moteur de simulation | Non | Jalon J3, périmètre *Could* sacrifiable | Moteur terminé dès la semaine 38 |
+| Conflits et collisions entre usagers | **Oui**, au début : plus de 2 400 collisions pour 12 000 pas | Longues campagnes de tests, scénarios rejouables | Ramenées à environ cinq ; la graine fixée de l'étude comparative a permis de rejouer les mêmes situations, mais sans tests automatisés |
+| Panne ou perte de temps sur les VM | **Oui**, plusieurs journées perdues au déploiement | Dépôt distant, instantanés de VM, exécution sur un seul poste | Dépôt créé tardivement, instantanés non utilisés, mode mono-poste possible mais non documenté |
+
+Le risque le plus sérieusement sous-estimé est donc le troisième : nous
+l'avions identifié, mais les mesures censées le réduire n'ont été
+appliquées que partiellement.
