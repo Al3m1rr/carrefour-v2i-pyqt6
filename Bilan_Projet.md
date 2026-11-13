@@ -1,6 +1,7 @@
 # Bilan de projet
 
 **SAÉ 3.02 — Carrefour intelligent connecté**
+
 Groupe « Python Mayo » — Atakan Gocer · Louise Halter-Tisler
 
 ---
@@ -322,10 +323,10 @@ du code elle-même.
 | J6 — Tests, mesures, corrections | S46 | Mesures comparatives en septembre ; corrections de déploiement en novembre ; **aucun test automatisé** | Mesures en avance, tests non réalisés |
 | J7 — Livraison finale | 15 nov. | Dépôt, documentation, bilan, IA-graphie | Soutenance à confirmer |
 
-Le Gantt prévoyait un effort réparti de la semaine 39 à la semaine 46, avec
-le pic de priorisation V2I en semaines 43 et 44 puis les tests en
-semaines 45 et 46. La charge s'est en réalité concentrée en **deux
-blocs** : les semaines 37 à 40, où l'essentiel du développement a eu
+Le Gantt prévoyait un effort réparti de la semaine 39 à la semaine 46,
+avec le pic de priorisation V2I en semaine 43, celui des tests en
+semaine 45 et celui de la documentation en semaine 46. La charge s'est
+en réalité concentrée en **deux blocs** : les semaines 37 à 40, où l'essentiel du développement a eu
 lieu, puis les semaines 45 et 46, consacrées au déploiement et à la
 documentation.
 

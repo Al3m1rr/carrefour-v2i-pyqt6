@@ -1,6 +1,7 @@
 # Documentation technique
 
 **SAÉ 3.02 — Groupe « Python Mayo »**
+
 Atakan Gocer · Louise Halter-Tisler
 
 Ce document explique **comment le projet est construit** et **pourquoi**

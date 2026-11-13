@@ -1,6 +1,7 @@
 # IA-graphie — usage des IA génératives
 
 **SAÉ 3.02 — Groupe « Python Mayo »**
+
 Atakan Gocer · Louise Halter-Tisler
 
 Ce document recense l'usage que nous avons fait des outils d'IA
