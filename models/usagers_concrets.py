@@ -29,8 +29,10 @@ class Vehicule(Usager):
             destination (str): branche de sortie visée.
             route (list): waypoints de la trajectoire.
             urgence (bool): véhicule prioritaire (ambulance, pompiers).
-            autonome (bool): véhicule autonome, qui détecte les alertes
-                V2I plus tôt qu'un conducteur humain.
+            autonome (bool): véhicule autonome. Il ne se distingue des
+                véhicules ordinaires que par son type et sa couleur :
+                aucun comportement de conduite spécifique n'est
+                implémenté.
         """
         if urgence:
             type_usager = "vehicule_urgence"
