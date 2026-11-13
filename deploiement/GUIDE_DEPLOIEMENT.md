@@ -409,6 +409,7 @@ ip route
 | Ce que vous voyez | Solution |
 |---|---|
 | `n'est pas dans le fichier sudoers` | Étape 0, puis ouvrez une **session neuve** avec `su - toto` : un nouvel onglet ne suffit pas |
+| `Aucun fichier ou dossier de ce nom` après un `su -` | `su -` vous place dans `/root`, pas dans le dossier du projet, qui reste dans `/home/toto/carrefour-v2i-pyqt6`. Ne lancez pas l'installateur en root : donnez `sudo` à `toto` (`usermod -aG sudo toto`), puis `su - toto` et `cd ~/carrefour-v2i-pyqt6` |
 | `Could not resolve host: github.com` | La carte Internet n'a plus d'adresse : en root, `nmcli device connect enp0s3` |
 | Une carte `UP` mais sans adresse IPv4 | Refaites l'étape 2 avec `IP_LOCALE` sur cette VM |
 | `192.168.56.x` présent sur `enp0s3` | Adresse privée posée sur la carte Internet : refaites l'étape 2, le script répare |
