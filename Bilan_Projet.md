@@ -228,17 +228,40 @@ machines virtuelles.
 
 ## 4. Analyse du planning
 
-> ⚠️ **À compléter avant le rendu** : les durées réelles doivent être
-> reprises des comptes rendus hebdomadaires, qui seuls font foi. Le
-> tableau ci-dessous situe les jalons à partir des traces du dépôt et
-> des dates de livraison ; les heures effectivement passées restent à
-> renseigner.
+> ⚠️ **À compléter avant le rendu** : les volumes horaires exacts
+> doivent être repris des comptes rendus hebdomadaires, qui seuls font
+> foi. Le tableau ci-dessous situe les jalons à partir des traces du
+> dépôt et des dates de livraison.
 
 ### Le planning prévisionnel
 
 Le cahier des charges déposé le **24 septembre** prévoyait sept jalons
 répartis des semaines 39 à 46, pour une charge estimée à **100 heures
 de groupe** — 72 heures pour le périmètre *Must*, 28 pour le *Should*.
+
+### L'écart le plus important : le volume horaire
+
+**La charge réelle a nettement dépassé l'estimation**, et surtout elle
+s'est déplacée. Les séances encadrées ont toutes été utilisées, mais
+elles n'ont couvert qu'une fraction du travail : l'essentiel a été
+réalisé en dehors, sur notre temps personnel.
+
+Cet écart n'est pas un simple dépassement de quelques heures. Il
+signifie que **notre estimation initiale était structurellement
+fausse** : nous avions chiffré la production de code, pas la
+compréhension du besoin, les allers-retours de conception, ni le temps
+de mise en production, qui s'est révélé être le poste le plus coûteux.
+
+Pourquoi cela ne s'est pas vu plus tôt : la charge supplémentaire étant
+absorbée hors séances, elle n'apparaissait pas comme un retard. Les
+jalons étaient tenus, mais au prix d'un volume horaire sans rapport
+avec le prévisionnel. Un suivi qui n'aurait regardé que les dates de
+livraison aurait conclu, à tort, que le planning était respecté.
+
+**Ce que nous en retirons** : estimer une charge demande d'inclure ce
+qui n'est pas de la production — lire un cahier des charges, revenir
+sur une décision, installer, déboguer, documenter. Dans notre cas, ces
+activités ont pesé plus lourd que l'écriture du code elle-même.
 
 ### Le déroulement réel
 
