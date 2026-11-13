@@ -38,8 +38,8 @@ du système.
 | Document | Contenu |
 |---|---|
 | [DOCUMENTATION.md](DOCUMENTATION.md) | Architecture, circulation des données, mécanismes clés |
-| [Bilan_Projet.md](Bilan_Projet.md) | Revue des fonctionnalités, conclusion technique et organisationnelle, analyse du planning |
-| [IAGraphie.md](IAGraphie.md) | Usage des IA génératives : cartographie, prompts, limites constatées, réflexion éthique |
+| [Bilan_Projet.pdf](Bilan_Projet.pdf) | Revue des fonctionnalités, conclusion technique et organisationnelle, analyse du planning |
+| [IAGraphie.pdf](IAGraphie.pdf) | Usage des IA génératives : cartographie, prompts, limites constatées, réflexion éthique |
 | [deploiement/GUIDE_DEPLOIEMENT.md](deploiement/GUIDE_DEPLOIEMENT.md) | Installation pas à pas sur deux VM |
 
 En résumé : on récupère la VM, on en obtient une seconde par clonage,

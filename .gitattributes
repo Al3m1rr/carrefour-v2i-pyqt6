@@ -10,3 +10,6 @@
 # Fichiers binaires : aucune conversion.
 *.png binary
 *.iso binary
+
+# Livrables PDF : aucune conversion de fins de ligne.
+*.pdf binary
