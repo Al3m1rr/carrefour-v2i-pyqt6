@@ -138,17 +138,35 @@ su - toto
 
 ### Option A — par l'archive ZIP (recommandé)
 
-C'est ce que propose GitHub avec le bouton vert **Code → Download ZIP**.
-Depuis le terminal de la VM, tout se fait en une fois :
+**A.1 — Obtenir le ZIP dans la VM.** Ouvrez le navigateur **de la VM**,
+allez sur https://github.com/Al3m1rr/carrefour-v2i-pyqt6 et cliquez sur
+le bouton vert **Code → Download ZIP**. Le fichier
+`carrefour-v2i-pyqt6-main.zip` arrive dans `~/Téléchargements`.
+
+Vous préférez le terminal ? Une seule commande, même résultat :
 
 ```bash
-cd ~
+curl -L -o ~/Téléchargements/carrefour-v2i-pyqt6-main.zip https://github.com/Al3m1rr/carrefour-v2i-pyqt6/archive/refs/heads/main.zip
+```
+
+> **Le ZIP vous a été remis autrement** (clé USB, courriel, dossier
+> partagé) ? Déposez-le simplement dans `~/Téléchargements` et
+> poursuivez. Si son nom diffère, adaptez-le dans les commandes qui
+> suivent.
+>
+> **Sans Internet dans la VM**, vous pouvez le servir depuis l'hôte :
+> `python -m http.server 8000` dans le dossier qui contient le ZIP, puis
+> dans la VM `curl -O http://10.0.2.2:8000/carrefour-v2i-pyqt6-main.zip`.
+> `10.0.2.2` est l'adresse de l'hôte vue à travers le NAT, et elle
+> fonctionne avant toute configuration réseau.
+
+**A.2 — Extraire et préparer.** Trois commandes :
+
+```bash
+cd ~ && unzip -q ~/Téléchargements/carrefour-v2i-pyqt6-main.zip
 ```
 ```bash
-curl -L -o carrefour.zip https://github.com/Al3m1rr/carrefour-v2i-pyqt6/archive/refs/heads/main.zip
-```
-```bash
-unzip -q carrefour.zip && mv carrefour-v2i-pyqt6-main carrefour-v2i-pyqt6
+mv carrefour-v2i-pyqt6-main carrefour-v2i-pyqt6
 ```
 ```bash
 cd carrefour-v2i-pyqt6 && chmod +x deploiement/*.sh
@@ -160,14 +178,6 @@ cd carrefour-v2i-pyqt6 && chmod +x deploiement/*.sh
 >
 > Le `chmod` est une précaution : l'archive conserve bien les droits
 > d'exécution, mais certains extracteurs graphiques les perdent.
-
-**Vous avez téléchargé le ZIP avec le navigateur de la VM ?** Il est
-alors dans `~/Téléchargements`. Remplacez les deux premières commandes
-par :
-
-```bash
-cd ~ && unzip -q ~/Téléchargements/carrefour-v2i-pyqt6-main.zip
-```
 
 **Vous refaites le déploiement ?** Supprimez d'abord l'ancien dossier,
 sinon `mv` échouera :
