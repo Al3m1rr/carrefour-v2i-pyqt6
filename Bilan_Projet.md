@@ -207,18 +207,15 @@ sur deux machines presque mécanique le jour où il a fallu le faire.
 
 ## 3. Conclusion organisationnelle
 
-> ⚠️ **À compléter** : indiquer qui a pris en charge quelles parties
-> du code et des documents. Les éléments ci-dessous décrivent notre
-> méthode de travail et nos contraintes d'emploi du temps.
-
 ### Notre méthode de travail
 
-Nous avons travaillé **en binôme sur l'ensemble des tâches**, sans
-répartition par spécialité. Ce choix nous a permis de comprendre tous
-les deux l'intégralité du projet, ce qui était nécessaire pour une
-soutenance où chacun peut être interrogé sur n'importe quelle partie.
-Son revers est que nous avons rarement travaillé en parallèle, donc
-avancé moins vite que si nous nous étions répartis les modules.
+Nous avons réalisé **l'ensemble du projet ensemble**, sans répartir les
+modules par personne : le code, les tests de déploiement et la
+documentation. Ce choix nous a permis de comprendre tous les deux
+l'intégralité du projet, ce qui est nécessaire pour une soutenance où
+chacun peut être interrogé sur n'importe quelle partie. Son revers est
+qu'il suppose de se retrouver aux mêmes moments, ce que nos emplois du
+temps différents ont compliqué (voir ci-dessous).
 
 Les rôles de cabinet conseil et de cabinet développement, évoqués dans
 la fiche de cadrage, n'ont pas été distingués en pratique.
