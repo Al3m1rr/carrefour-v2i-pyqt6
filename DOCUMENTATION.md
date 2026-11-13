@@ -283,3 +283,104 @@ perpendiculaire mais ne vide pas la file déjà présente devant
 l'ambulance. Elle se retrouve derrière des véhicules qui ont le vert et
 ne peuvent pas avancer. C'est exactement ce que la voie réservée
 corrige.
+
+---
+
+## 5. Où se voit le respect de la stack imposée
+
+Le sujet impose des technologies précises. Voici, pour chacune, le
+fichier à ouvrir si on vous demande de le prouver.
+
+| Contrainte | Où elle est satisfaite |
+|---|---|
+| **PyQt6 obligatoire**, Pygame interdit | `client/` entier. `requirements.txt` ne contient que PyQt6 |
+| `QGraphicsScene` / `QGraphicsView` recommandés | `client/scene_carrefour.py` |
+| **Sockets bas niveau**, MQTT interdit | `reseau/serveur_socket.py` et `reseau/client_moteur.py` : uniquement le module `socket` standard |
+| Sérialisation en `json` | `reseau/protocole.py`, 48 lignes |
+| **QThread + pyqtSignal** | `client/thread_reseau.py` |
+| `threading` côté serveurs | `reseau/serveur_socket.py` : un thread de lecture par client |
+| **Règle d'or thread-safety** | Aucun widget n'est touché hors du thread principal : voir plus bas |
+| MariaDB | `database/connexion.py`, deux bases distinctes |
+| Versions exactes | `requirements.txt` et `requirements-serveur.txt` |
+
+### La couche transport, codée à la main
+
+Le sujet interdit les protocoles clé en main et demande de coder
+soi-même la couche transport. C'est l'objet de `protocole.py`, et le
+problème qu'il résout mérite d'être expliqué.
+
+Un socket TCP transporte un **flux d'octets**, pas des messages. Rien ne
+garantit qu'un `recv()` corresponde à un `sendall()` : deux messages
+peuvent arriver collés, ou un seul arriver en deux morceaux.
+
+Notre solution est le **délimiteur** : chaque message est un objet JSON
+sur **une seule ligne**, terminé par `\n`.
+
+```python
+def extraire_messages(buffer):
+    morceaux = buffer.split(SEPARATEUR)
+    reste = morceaux.pop()        # dernier morceau = message incomplet
+    messages = [decoder_message(m) for m in morceaux if m]
+    return messages, reste
+```
+
+Le receveur accumule les octets, découpe sur `\n`, traite les messages
+complets et **conserve le reste** pour la prochaine réception. C'est ce
+`reste` qui fait tout : sans lui, un message coupé en deux serait perdu.
+
+### Comment la règle de thread-safety est tenue
+
+C'est la question la plus probable sur la partie réseau du client.
+
+```
+ThreadReseau (thread secondaire)        FenetrePrincipale (thread principal)
+        │                                            │
+   recv() sur le socket                              │
+        │                                            │
+   etat_recu.emit(message)  ─── signal Qt ──►  @pyqtSlot maj_affichage()
+                                                     │
+                                            seul lui touche aux widgets
+```
+
+Le thread réseau ne fait **que** recevoir et émettre des signaux. Qt se
+charge de basculer vers le thread principal, où les slots s'exécutent.
+Dans l'autre sens, `envoyer_commande()` écrit sur le socket sous un
+verrou, et ne touche à aucun widget.
+
+Le fichier `client/thread_reseau.py` fait 118 lignes : c'est le seul
+endroit du projet où les deux threads se rencontrent.
+
+---
+
+## 6. Les deux bases de données
+
+| | VM1 — `carrefour_moteur_db` | VM2 — `carrefour_stats_db` |
+|---|---|---|
+| Tables | `usager`, `evenement` | `session_simulation` |
+| Écrite par | le moteur, à chaque tick | la passerelle, 2 fois par session |
+| Contenu | qui est entré, par où, combien de temps | le bilan agrégé d'une session |
+
+**Pourquoi ce découpage ?** Chaque base est placée auprès du processus
+qui écrit dedans. Le moteur enregistre chaque entrée et chaque sortie,
+soit potentiellement des dizaines d'écritures par seconde : les faire
+voyager sur le réseau à chaque fois n'aurait aucun sens. La passerelle
+n'écrit qu'à l'ouverture et à la clôture d'une session.
+
+**La preuve de la répartition**, en une commande sur chaque VM :
+
+```bash
+sudo mariadb -e "SHOW DATABASES;"
+```
+
+La VM1 a `carrefour_moteur_db` mais pas `carrefour_stats_db`, et
+l'inverse sur la VM2. Les données ne sont pas centralisées.
+
+**Deux détails défendables** :
+
+- `enregistrer_usager` utilise `ON DUPLICATE KEY UPDATE`. Les
+  identifiants d'usagers repartent de 1 à chaque démarrage du moteur :
+  sans cela, une seconde exécution échouerait en doublon sur chaque
+  insertion.
+- Si MariaDB est injoignable, le DAO vaut `None` et la simulation
+  continue **sans enregistrer**, en le signalant au démarrage. Une base
+  absente ne doit pas empêcher une démonstration.
