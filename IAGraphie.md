@@ -134,3 +134,116 @@ fonctionné, parce que nous apportions quelque chose que l'outil n'avait
 pas : **l'accès aux machines**. Nos tests ont révélé des bugs que
 l'IA avait elle-même introduits et qu'aucune relecture n'aurait
 détectés. Nous y revenons au chapitre suivant.
+
+---
+
+## 3. Ce que nos tests ont révélé
+
+Ce chapitre est le plus instructif du document, parce qu'il montre la
+limite concrète de l'outil : **du code plausible, relu et commenté,
+peut être faux**, et seule l'exécution le dit.
+
+### Un bug invisible en relecture
+
+Le DAO lisait `usager.direction`, un attribut qui n'existe pas — il
+s'appelle `branche`. Le code était syntaxiquement correct, cohérent
+avec son contexte, et avait été relu.
+
+Pourquoi personne ne l'a vu : **ce chemin n'était jamais exécuté**. Sans
+MariaDB installé en local, le DAO valait `None` et les écritures en base
+étaient silencieusement ignorées. Le bug n'est apparu qu'au premier
+déploiement sur une VM, où le moteur a planté dès le premier usager.
+
+### Un bug qui simulait son propre bon fonctionnement
+
+Le script de provisionnement cherchait la carte réseau à configurer en
+listant celles qui **avaient déjà une adresse**. Or la carte privée n'en
+a pas, c'est précisément ce qu'on veut corriger. Il sélectionnait donc
+la carte Internet et lui imposait une adresse privée.
+
+Résultat : deux routes concurrentes vers le même réseau, une machine
+invisible pour l'autre VM — alors que tous les signes extérieurs
+paraissaient bons. Interface active, bonne adresse, aucun message
+d'erreur. Il a fallu lire la table de routage pour comprendre.
+
+### Un message qui affirmait le contraire de la réalité
+
+La passerelle affichait `Bilan de session enregistre` même lorsque rien
+n'avait été écrit en base. Nous avons cru pendant un moment que nos
+données étaient enregistrées.
+
+### Ce que nous en retenons
+
+L'outil produit vite du code qui a toutes les apparences du correct.
+Les trois bugs ci-dessus ont en commun de ne pas être détectables par
+la lecture : il fallait **exécuter dans les conditions réelles**. Notre
+contribution décisive n'a pas été d'écrire ce code, mais de le mettre
+en situation jusqu'à ce qu'il casse.
+
+C'est aussi ce qui nous a fait refuser une dernière proposition : à
+deux jours du rendu, simplifier le code pour le rendre plus facile à
+expliquer. Sans tests automatisés, toute modification aurait dû être
+revalidée à la main sur les deux VM. Nous avons préféré documenter le
+code existant plutôt que risquer un projet qui fonctionne.
+
+---
+
+## 4. Réflexion éthique
+
+### Propriété intellectuelle du code produit
+
+Une part importante du code a été écrite par un outil entraîné sur du
+code existant, dont nous ne connaissons ni les sources ni les licences.
+Nous ne pouvons donc pas garantir l'originalité de chaque ligne. Dans
+un contexte scolaire, c'est acceptable dès lors que l'usage est déclaré
+— ce document existe pour cela. Dans un contexte professionnel, le
+sujet mériterait une vérification juridique avant diffusion.
+
+Nous assumons en revanche la **responsabilité** de ce code : nous
+l'avons lu, testé, corrigé, et nous sommes capables de l'expliquer. Un
+code qu'on ne saurait pas défendre ne devrait pas être rendu.
+
+### Dépendance technique
+
+Le risque est réel et nous l'avons ressenti. Il est confortable de
+demander une correction plutôt que de comprendre une panne. Deux
+garde-fous nous ont aidés : **exiger systématiquement l'explication**
+avec le correctif, et **tester nous-mêmes**, ce qui oblige à comprendre
+ce qu'on observe.
+
+Le chapitre précédent montre d'ailleurs la limite de cette dépendance :
+l'outil ne pouvait pas trouver seul des bugs qui ne se manifestent
+qu'à l'exécution. Lui déléguer aussi la validation aurait laissé passer
+les trois.
+
+### Données personnelles
+
+Le projet ne manipule aucune donnée personnelle réelle : les usagers
+sont générés aléatoirement et ne portent qu'un identifiant numérique,
+un type et des horodatages. Aucune question de conformité au RGPD ne se
+pose en l'état.
+
+Elle se poserait immédiatement pour un déploiement réel à Mulhouse : un
+système qui détecte les véhicules et enregistre leurs passages traite
+des données susceptibles d'identifier des personnes. Il faudrait alors
+définir une durée de conservation, limiter la collecte au strict
+nécessaire, et probablement anonymiser les identifiants.
+
+### Biais et angles morts
+
+L'outil propose les solutions les plus répandues dans son corpus. Cela
+s'est vu dès le début : interrogé sans contrainte, il a proposé Pygame,
+le choix le plus fréquent pour une simulation 2D en Python, alors que
+notre cahier des charges l'interdisait.
+
+Le même biais s'applique aux choix de conception : les solutions
+proposées sont conventionnelles, rarement originales. Pour un projet
+scolaire, c'est plutôt un avantage — le code est lisible et
+reconnaissable. Pour un projet de recherche, ce serait une limite.
+
+### Honnêteté de la démarche
+
+Nous avons choisi de documenter notre usage de l'IA avec précision, y
+compris ce qui ne nous met pas en valeur : le prototype Pygame à
+réécrire, les bugs introduits, le temps perdu. Un document qui ne
+présenterait que les réussites serait moins utile et moins crédible.
