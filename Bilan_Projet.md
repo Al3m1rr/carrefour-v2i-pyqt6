@@ -189,3 +189,97 @@ en démonstration, et c'est elle qui donne de la valeur à nos chiffres.
 **La séparation stricte des rôles.** Un seul composant décide, les
 autres transmettent et affichent. Cette discipline a rendu le découpage
 sur deux machines presque mécanique le jour où il a fallu le faire.
+
+---
+
+## 3. Conclusion organisationnelle
+
+> ⚠️ **À compléter** : la répartition réelle des tâches entre nous deux
+> doit être reprise des comptes rendus hebdomadaires. Les éléments
+> ci-dessous décrivent la méthode de travail, pas le détail de qui a
+> fait quoi.
+
+### Notre méthode de travail
+
+Nous avons travaillé **en binôme sur l'ensemble des tâches**, sans
+répartition par spécialité. Ce choix nous a permis de comprendre tous
+les deux l'intégralité du projet, ce qui était nécessaire pour une
+soutenance où chacun peut être interrogé sur n'importe quelle partie.
+Son revers est que nous avons rarement travaillé en parallèle, donc
+avancé moins vite que si nous nous étions répartis les modules.
+
+Les rôles de cabinet conseil et de cabinet développement, évoqués dans
+la fiche de cadrage, n'ont pas été distingués en pratique.
+
+### L'usage de l'IA dans notre organisation
+
+Nous avons utilisé Claude tout au long du projet. Cela a changé notre
+façon de travailler : moins de temps passé à écrire du code, davantage
+à spécifier ce que nous voulions, à tester, et à comprendre les
+réponses obtenues. L'[IA-graphie](IAGraphie.md) détaille cet usage,
+y compris ce qu'il nous a coûté.
+
+Un effet que nous n'avions pas anticipé : notre contribution la plus
+décisive a été **le test en conditions réelles**. Trois bugs qu'aucune
+relecture n'aurait détectés ne sont apparus qu'en déployant sur les
+machines virtuelles.
+
+---
+
+## 4. Analyse du planning
+
+> ⚠️ **À compléter avant le rendu** : les durées réelles doivent être
+> reprises des comptes rendus hebdomadaires, qui seuls font foi. Le
+> tableau ci-dessous situe les jalons à partir des traces du dépôt et
+> des dates de livraison ; les heures effectivement passées restent à
+> renseigner.
+
+### Le planning prévisionnel
+
+Le cahier des charges déposé le **24 septembre** prévoyait sept jalons
+répartis des semaines 39 à 46, pour une charge estimée à **100 heures
+de groupe** — 72 heures pour le périmètre *Must*, 28 pour le *Should*.
+
+### Le déroulement réel
+
+| Période | Ce qui s'est passé |
+|---|---|
+| Semaine du 8 sept. | Analyse du besoin, préparation des questions au client |
+| Semaine du 15 sept. | Premier prototype, puis **réécriture complète** après lecture du cahier des charges imposant PyQt6 |
+| 24 sept. | Dépôt du cahier des charges |
+| Fin sept. – octobre | Logique métier : voie réservée, alertes anticipées, niveaux de priorité, serrage à droite |
+| Octobre | Analyse critique, puis construction de l'étude comparative |
+| 2 oct. | Dernières fonctionnalités : application ambulance, signature HMAC, mode dégradé |
+| 8 nov. | **Répartition sur deux VM**, premier déploiement réel |
+| 12 nov. | Déploiement sur les postes de l'IUT, correction des scripts |
+| 13 nov. | Documentation technique, bilan, IA-graphie |
+| 15 nov. | Rendu |
+
+### Les écarts et leurs causes
+
+**La réécriture de la mi-septembre.** Le prototype Pygame a été
+entièrement refait en PyQt6 avec des sockets. La cause est
+identifiable : nous avons commencé à produire du code avant d'avoir lu
+et transmis le cahier des charges. La logique métier a pu être
+conservée, ce qui a limité la perte, mais toute la couche technique
+était à refaire.
+
+**La répartition sur deux VM, tardive.** Elle n'est intervenue qu'au
+8 novembre, alors que c'est une exigence structurante du sujet. Jusque-
+là, le projet tournait sur une seule machine. Ce report a concentré en
+fin de projet un travail d'architecture et de déploiement qui a révélé
+des bugs — ceux-là mêmes qui nous ont pris le plus de temps. Les
+découvrir en septembre aurait été nettement plus confortable.
+
+**Le déploiement, largement sous-estimé.** Nous avions prévu
+l'installation comme une formalité. Elle a occupé deux journées
+entières, pour des raisons qui n'avaient rien à voir avec notre code :
+profils réseau des machines virtuelles, droits `sudo`, variables
+d'environnement graphiques. C'est l'enseignement principal de notre
+planning : **le temps de mise en production ne se devine pas**, il
+s'éprouve.
+
+**Le temps consacré à la documentation.** Nous l'avons concentré sur
+les derniers jours. Rédigée au fil de l'eau, elle aurait été plus
+fidèle, notamment sur les décisions de conception dont nous avons dû
+retrouver les raisons a posteriori.
