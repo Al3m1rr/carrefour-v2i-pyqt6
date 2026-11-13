@@ -83,7 +83,7 @@ Réveillez la carte Internet, installez les outils, donnez les droits :
 nmcli device connect enp0s3
 ```
 ```bash
-apt update && apt install -y sudo git
+apt update && apt install -y sudo curl unzip git
 ```
 ```bash
 usermod -aG sudo toto
@@ -132,14 +132,65 @@ su - toto
 
 ## Étape 1 — Récupérer le projet — 2 min
 
-**À faire sur les DEUX VM** :
+**À faire sur les DEUX VM.** Deux façons, au choix : l'archive ZIP ou
+`git clone`. Les deux aboutissent au même dossier
+`~/carrefour-v2i-pyqt6`, et la suite du guide est identique.
+
+### Option A — par l'archive ZIP (recommandé)
+
+C'est ce que propose GitHub avec le bouton vert **Code → Download ZIP**.
+Depuis le terminal de la VM, tout se fait en une fois :
 
 ```bash
-git clone https://github.com/Al3m1rr/carrefour-v2i-pyqt6.git
+cd ~
+```
+```bash
+curl -L -o carrefour.zip https://github.com/Al3m1rr/carrefour-v2i-pyqt6/archive/refs/heads/main.zip
+```
+```bash
+unzip -q carrefour.zip && mv carrefour-v2i-pyqt6-main carrefour-v2i-pyqt6
+```
+```bash
+cd carrefour-v2i-pyqt6 && chmod +x deploiement/*.sh
+```
+
+> **Le renommage n'est pas un détail** : GitHub nomme le dossier extrait
+> `carrefour-v2i-pyqt6-main`, avec le suffixe de la branche. Le renommer
+> évite d'avoir à adapter toutes les commandes qui suivent.
+>
+> Le `chmod` est une précaution : l'archive conserve bien les droits
+> d'exécution, mais certains extracteurs graphiques les perdent.
+
+**Vous avez téléchargé le ZIP avec le navigateur de la VM ?** Il est
+alors dans `~/Téléchargements`. Remplacez les deux premières commandes
+par :
+
+```bash
+cd ~ && unzip -q ~/Téléchargements/carrefour-v2i-pyqt6-main.zip
+```
+
+**Vous refaites le déploiement ?** Supprimez d'abord l'ancien dossier,
+sinon `mv` échouera :
+
+```bash
+rm -rf ~/carrefour-v2i-pyqt6
+```
+
+### Option B — par git
+
+```bash
+cd ~ && git clone https://github.com/Al3m1rr/carrefour-v2i-pyqt6.git
 ```
 ```bash
 cd carrefour-v2i-pyqt6
 ```
+
+> **✅ Contrôle 1** — quelle que soit l'option :
+> ```bash
+> ls deploiement/
+> ```
+> doit afficher `demarrer.sh`, `installer_vm.sh`, `verifier.sh` et les
+> deux guides.
 
 ---
 

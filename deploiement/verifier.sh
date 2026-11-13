@@ -30,13 +30,23 @@ fi
 echo "  Machine : $(hostname)"
 
 titre "Outils de base"
-for outil in python3 git sudo; do
+for outil in python3 sudo; do
     if command -v "$outil" >/dev/null; then
         ok "$outil present"
     else
         souci "$outil absent  ->  apt install $outil (en root : su -)"
     fi
 done
+
+# Un seul de ces outils suffit : curl+unzip pour l'archive ZIP, git pour
+# le clone. Ne reclamer que celui du parcours reellement suivi.
+if command -v git >/dev/null; then
+    ok "git present (recuperation par clone possible)"
+elif command -v unzip >/dev/null; then
+    ok "unzip present (recuperation par archive ZIP possible)"
+else
+    souci "ni git ni unzip  ->  apt install unzip (ou git)"
+fi
 
 titre "Version de Python"
 if command -v python3 >/dev/null; then
