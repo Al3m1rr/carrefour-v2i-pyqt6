@@ -241,23 +241,32 @@ de groupe** — 72 heures pour le périmètre *Must*, 28 pour le *Should*.
 
 ### Le temps réellement consommé
 
-| | Volume |
+| | Volume de groupe |
 |---|---|
-| Estimation du cahier des charges | **100 h de groupe** |
+| **Estimation** du cahier des charges | 100 h |
 | Séances d'autonomie encadrées | **44 h** |
-| Travail personnel hors séances | **≈ 25 h** pour Atakan, plus celui de Louise |
+| Travail personnel hors séances | **≈ 60 h** (estimation) |
+| **Total réalisé** | **≈ 104 h** |
 
 Les séances d'autonomie inscrites à l'emploi du temps se sont étalées
 de la semaine 37 à la semaine 46, à raison de trois à dix heures par
-semaine selon les périodes.
+semaine selon les périodes. Le chiffre du travail personnel est une
+estimation : nos comptes rendus hebdomadaires relevaient les tâches
+accomplies plus systématiquement que les heures passées.
 
 ### L'analyse de l'écart
 
-**Les séances encadrées ne pouvaient pas suffire.** Avec 44 heures
-inscrites face à une charge estimée à 100 heures de groupe, le recours
-au travail personnel n'était pas un dépassement accidentel : il était
-**structurellement nécessaire dès le départ**. Notre planning
-prévisionnel ne le disait pas explicitement, ce qui est sa principale
+**L'estimation globale était juste.** 104 heures réalisées pour 100
+prévues : à quatre heures près, nous avions correctement évalué
+l'ampleur du travail. C'est le point positif de notre planning, et il
+mérite d'être souligné.
+
+**C'est la répartition qui était fausse.** Près de **60 % du projet a
+été réalisé en dehors des séances encadrées**. Avec seulement 44 heures
+inscrites à l'emploi du temps face à une charge estimée à 100, le
+recours massif au travail personnel n'était pas un dépassement
+accidentel : il était **arithmétiquement inévitable dès le départ**.
+Notre planning ne l'énonçait nulle part, et c'est sa véritable
 faiblesse — il annonçait un volume sans préciser où ces heures seraient
 prises.
 
@@ -269,20 +278,24 @@ des raisons sans rapport avec notre code — profils réseau des machines
 virtuelles, droits d'administration, variables d'environnement
 graphiques.
 
-**Le dépassement est resté invisible.** Comme la charge supplémentaire
-était absorbée en dehors des séances, elle n'apparaissait pas comme un
-retard : les jalons étaient tenus. Un suivi qui n'aurait regardé que
-les dates de livraison aurait conclu à tort que le planning était
-respecté, alors que le volume horaire réel n'avait plus de rapport avec
-le prévisionnel.
+**Le déséquilibre est resté invisible.** Comme la charge était absorbée
+en dehors des séances, elle n'apparaissait pas comme un retard : les
+jalons étaient tenus. Un suivi qui n'aurait regardé que les dates de
+livraison aurait conclu que tout allait bien, sans voir que plus de la
+moitié du travail se faisait hors du cadre prévu.
 
-**Ce que nous en retirons.** Une estimation doit inclure ce qui n'est
-pas de la production — lire un cahier des charges, revenir sur une
-décision, installer, déboguer, documenter. Dans notre cas, ces
-activités ont pesé plus lourd que l'écriture du code. Elle doit aussi
-préciser **où** les heures seront prises : annoncer 100 heures quand
+**Ce que nous en retirons.** Estimer un volume ne suffit pas, il faut
+préciser **où** les heures seront prises. Annoncer 100 heures quand
 l'emploi du temps n'en offre que 44 revient à sous-entendre un travail
-personnel que nous n'avions pas chiffré.
+personnel que nous n'avions ni chiffré ni annoncé. Un planning honnête
+aurait dit : « 44 heures encadrées, environ 56 heures à prendre sur
+notre temps personnel » — ce qui aurait permis d'en discuter dès le
+départ, et de réduire le périmètre si ce volume n'était pas tenable.
+
+Une estimation doit aussi inclure ce qui n'est pas de la production :
+lire un cahier des charges, revenir sur une décision, installer,
+déboguer, documenter. Ces activités ont pesé plus lourd que l'écriture
+du code elle-même.
 
 ### Le déroulement réel
 
