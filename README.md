@@ -28,6 +28,11 @@ récupérer dans le dossier réseau **Commun**, puis à copier dans
 — environ 30 minutes, à dérouler de haut en bas, avec un point de
 contrôle après chaque étape critique.
 
+📖 **[Documentation technique](DOCUMENTATION.md)** — comment le projet
+est construit et pourquoi : l'architecture, le parcours d'une donnée,
+le rôle de chaque fichier et les quatre mécanismes qui font l'intérêt
+du système.
+
 En résumé : on récupère la VM, on en obtient une seconde par clonage,
 puis, sur chacune, on clone ce dépôt et on lance un script qui installe
 MariaDB, crée la base du rôle et fixe l'adresse réseau. Le moteur tourne
