@@ -114,6 +114,9 @@ exit
 su - toto
 ```
 
+> Il faut un **espace** entre le tiret et `toto`. `su -toto` est refusé
+> avec « option invalide -- 't' ».
+
 > **✅ Contrôle 0** — sur chaque VM, ces trois commandes doivent
 > réussir :
 > ```bash
@@ -135,6 +138,15 @@ su - toto
 **À faire sur les DEUX VM.** Deux façons, au choix : l'archive ZIP ou
 `git clone`. Les deux aboutissent au même dossier
 `~/carrefour-v2i-pyqt6`, et la suite du guide est identique.
+
+> ⚠ **Faites cette étape en tant que `toto`, jamais en root.** Le
+> dossier est créé dans le répertoire personnel de l'utilisateur
+> connecté : après un `su -`, vous seriez dans `/root`, et le projet
+> n'appartiendrait pas à `toto`, qui lance ensuite les services.
+>
+> **Vous avez déjà téléchargé le ZIP avant de donner `sudo` à `toto` ?**
+> Aucun problème : vos fichiers sont dans `/home/toto`. Reprenez à
+> l'étape 0, puis `su - toto` et `cd ~/carrefour-v2i-pyqt6`.
 
 ### Option A — par l'archive ZIP (recommandé)
 
