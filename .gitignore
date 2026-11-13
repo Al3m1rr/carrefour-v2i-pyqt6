@@ -5,3 +5,6 @@ venv-client/
 *.csv
 *.png
 identifiants_vm.local.txt
+
+# Preparation interne de la soutenance : reste sur nos postes.
+SOUTENANCE.md
