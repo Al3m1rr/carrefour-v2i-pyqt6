@@ -239,29 +239,50 @@ Le cahier des charges déposé le **24 septembre** prévoyait sept jalons
 répartis des semaines 39 à 46, pour une charge estimée à **100 heures
 de groupe** — 72 heures pour le périmètre *Must*, 28 pour le *Should*.
 
-### L'écart le plus important : le volume horaire
+### Le temps réellement consommé
 
-**La charge réelle a nettement dépassé l'estimation**, et surtout elle
-s'est déplacée. Les séances encadrées ont toutes été utilisées, mais
-elles n'ont couvert qu'une fraction du travail : l'essentiel a été
-réalisé en dehors, sur notre temps personnel.
+| | Volume |
+|---|---|
+| Estimation du cahier des charges | **100 h de groupe** |
+| Séances d'autonomie encadrées | **44 h** |
+| Travail personnel hors séances | **≈ 25 h** pour Atakan, plus celui de Louise |
 
-Cet écart n'est pas un simple dépassement de quelques heures. Il
-signifie que **notre estimation initiale était structurellement
-fausse** : nous avions chiffré la production de code, pas la
-compréhension du besoin, les allers-retours de conception, ni le temps
-de mise en production, qui s'est révélé être le poste le plus coûteux.
+Les séances d'autonomie inscrites à l'emploi du temps se sont étalées
+de la semaine 37 à la semaine 46, à raison de trois à dix heures par
+semaine selon les périodes.
 
-Pourquoi cela ne s'est pas vu plus tôt : la charge supplémentaire étant
-absorbée hors séances, elle n'apparaissait pas comme un retard. Les
-jalons étaient tenus, mais au prix d'un volume horaire sans rapport
-avec le prévisionnel. Un suivi qui n'aurait regardé que les dates de
-livraison aurait conclu, à tort, que le planning était respecté.
+### L'analyse de l'écart
 
-**Ce que nous en retirons** : estimer une charge demande d'inclure ce
-qui n'est pas de la production — lire un cahier des charges, revenir
-sur une décision, installer, déboguer, documenter. Dans notre cas, ces
-activités ont pesé plus lourd que l'écriture du code elle-même.
+**Les séances encadrées ne pouvaient pas suffire.** Avec 44 heures
+inscrites face à une charge estimée à 100 heures de groupe, le recours
+au travail personnel n'était pas un dépassement accidentel : il était
+**structurellement nécessaire dès le départ**. Notre planning
+prévisionnel ne le disait pas explicitement, ce qui est sa principale
+faiblesse — il annonçait un volume sans préciser où ces heures seraient
+prises.
+
+**L'estimation ne chiffrait que la production.** Nous avions évalué le
+temps d'écrire le code, pas celui de comprendre le besoin, de revenir
+sur une décision, ni de mettre en production. Ce dernier poste s'est
+révélé le plus coûteux : deux journées entières de déploiement, pour
+des raisons sans rapport avec notre code — profils réseau des machines
+virtuelles, droits d'administration, variables d'environnement
+graphiques.
+
+**Le dépassement est resté invisible.** Comme la charge supplémentaire
+était absorbée en dehors des séances, elle n'apparaissait pas comme un
+retard : les jalons étaient tenus. Un suivi qui n'aurait regardé que
+les dates de livraison aurait conclu à tort que le planning était
+respecté, alors que le volume horaire réel n'avait plus de rapport avec
+le prévisionnel.
+
+**Ce que nous en retirons.** Une estimation doit inclure ce qui n'est
+pas de la production — lire un cahier des charges, revenir sur une
+décision, installer, déboguer, documenter. Dans notre cas, ces
+activités ont pesé plus lourd que l'écriture du code. Elle doit aussi
+préciser **où** les heures seront prises : annoncer 100 heures quand
+l'emploi du temps n'en offre que 44 revient à sous-entendre un travail
+personnel que nous n'avions pas chiffré.
 
 ### Le déroulement réel
 
