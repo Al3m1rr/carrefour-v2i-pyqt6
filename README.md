@@ -2,10 +2,10 @@
 
 **SAÉ 3.02 — Groupe « Python Mayo »**
 
-| Étudiant | |
-|---|---|
-| Atakan Gocer | |
-| Louise Halter-Tisler | |
+| Étudiant |
+|---|
+| Atakan Gocer |
+| Louise Halter-Tisler |
 
 Maquette PyQt6 + sockets (V2I) + MariaDB d'un carrefour capable
 d'ouvrir un **couloir prioritaire** pour les véhicules d'urgence.
