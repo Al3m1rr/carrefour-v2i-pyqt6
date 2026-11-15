@@ -103,6 +103,19 @@ infrastructures et des budgets hors de portée.
 
 ---
 
+## Lexique des mesures
+
+- **Pas de simulation (« tick »)** : la simulation avance par petits pas
+  de 1/30 de seconde. 12 000 pas représentent donc environ 6 min 40 s de
+  trafic simulé.
+- **Situation de trafic (« graine »)** : une suite d'usagers générée au
+  hasard. Pour comparer équitablement deux configurations, on rejoue
+  exactement la même suite avec et sans le système : c'est ce qu'on
+  appelle fixer la « graine » du hasard. Chaque graine donne une
+  situation de trafic différente.
+
+---
+
 ## Le principe implémenté : la voie réservée aux secours
 
 1. Un véhicule d'urgence émet une **alerte V2I** en approchant du carrefour.
@@ -130,7 +143,7 @@ infrastructures et des budgets hors de portée.
 | Temps passé à l'arrêt | ~13,7 s | **~0,7 s** |
 
 **Gain : −56 % de temps de traversée.** Sécurité : 4 à 6 collisions
-résiduelles pour 12 000 cycles de simulation.
+résiduelles pour 12 000 pas de simulation (voir le lexique plus haut).
 
 ## Alertes anticipées et niveaux de priorité
 
@@ -183,9 +196,10 @@ avant de cliquer sur **+** à côté de « Urgences ». Le bouton **−** annule
 d'abord une alerte dont le véhicule n'est pas encore arrivé. Le panneau V2I
 liste les alertes en cours (priorité, itinéraire, compte à rebours, statut).
 
-Sécurité : 3,3 collisions en moyenne sur 10 graines × 8 000 ticks (3,9
-avant l'ajout des alertes) ; aucune collision dans les scénarios de
-réattribution testés.
+Sécurité : 3,3 collisions en moyenne sur 10 situations de trafic
+différentes de 8 000 pas de simulation chacune, soit environ 4 min 27 s
+de trafic (3,9 avant l'ajout des alertes) ; aucune collision dans les
+scénarios de réattribution testés.
 
 ## Serrer à droite à l'approche d'un véhicule d'urgence
 
@@ -223,8 +237,8 @@ Paramètres dans `config.py` (section *SERRER À DROITE*), désactivable avec
 | **Voie réservée + serrage** | **9,6 s** | 1,0 s | 15,0 s |
 
 Sécurité : 3,5 collisions en moyenne sans serrage, 3,9 avec (sur 10
-graines × 8 000 ticks, écart dans le bruit statistique) ; 3 collisions liées
-au serrage sur 80 000 ticks.
+situations de trafic de 8 000 pas chacune, écart dans le bruit
+statistique) ; 3 collisions liées au serrage sur 80 000 pas au total.
 
 ## Étude comparative des mécanismes
 
@@ -271,7 +285,7 @@ Fonctionnement réseau (communication bidirectionnelle, deux sauts) :
    dans une `queue.Queue`. La passerelle l'étiquette avec l'identifiant
    du client émetteur et la transmet à la VM1.
 3. Sur la **VM1**, un thread de lecture dépose la commande dans sa
-   propre file. La boucle de simulation la vide **entre deux ticks** :
+   propre file. La boucle de simulation la vide **entre deux pas de simulation** :
    le moteur n'est jamais modifié par deux threads en même temps.
 4. La VM1 répond `{"type": "info", "message": ..., "_client": id}`. La
    passerelle lit cet identifiant, retire le champ et renvoie la réponse
@@ -295,7 +309,7 @@ elle ne quitte jamais la VM2 en direction des clients.
 | Interdiction de bloquer le carrefour (dégagement) | `_peut_degager` |
 | Bande cyclable séparée, piétons sur deux demi-passages | `config.DECALAGE_CYCLABLE`, `route_pieton` |
 
-## Résultats mesurés (12 000 ticks, ~6,5 min de simulation)
+## Résultats mesurés (12 000 pas de simulation, ~6,5 min de trafic)
 
 - **5 collisions** (contre 2402 avant les corrections de priorité)
 - 9 couloirs prioritaires ouverts, 29 déviations forcées
@@ -334,7 +348,7 @@ Le projet ne tourne pas sur une seule machine : les **processus** et les
    la VM2. Un client défaillant ou malveillant ne peut pas atteindre
    directement la machine qui fait tourner la simulation.
 3. **Chaque base est colocalisée avec son principal producteur.** La
-   VM1 écrit `usager` et `evenement` à chaque tick (jusqu'à plusieurs
+   VM1 écrit `usager` et `evenement` à chaque pas de simulation (jusqu'à plusieurs
    écritures par seconde) : les garder en local évite un aller-retour
    réseau systématique. La VM2 n'écrit `session_simulation` que deux
    fois par session, à l'ouverture et à la clôture — cette table suit
@@ -488,16 +502,19 @@ utils/
 ## Limites connues (à assumer devant le jury)
 
 - Une seule voie par sens et par branche ; pas de voie de tourne-à-gauche dédiée
-- Les véhicules prioritaires vont tout droit (cas d'usage de la démo)
+- Dans la démonstration, les véhicules d'urgence vont tout droit pour
+  garder un scénario lisible ; le principe de la voie réservée resterait
+  le même s'ils tournaient à gauche ou à droite
 - Les cyclistes suivent les mêmes trajectoires que les véhicules, décalés
   sur une bande ; pas de sas vélo
-- Quelques collisions résiduelles (~5 pour 12 000 ticks) dans des
+- Quelques collisions résiduelles (~5 pour 12 000 pas de simulation) dans des
   configurations de croisement serrées
 - Le couloir s'ouvre à l'alerte, soit un délai fixe de 12 s avant
   l'arrivée (`DELAI_ALERTE`), et non à une distance calibrée en mètres
 - Pas de modélisation des pertes de paquets ni de la latence V2I ; la
   liaison inter-VM gère en revanche la coupure franche (reconnexion
   automatique et mode dégradé annoncé aux clients)
-- Déviation du trafic vers une branche tirée au hasard, pas vers la
-  branche la moins chargée
-- Pas de tests unitaires automatisés
+- Pas de tests automatiques du code (un test automatique est un petit
+  programme qui revérifie seul que le code fonctionne) : la validation
+  s'est faite en lançant la simulation, en mesurant les résultats sur des
+  situations de trafic identiques et en déployant sur les VM

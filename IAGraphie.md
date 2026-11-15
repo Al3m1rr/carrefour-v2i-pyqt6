@@ -207,7 +207,7 @@ en situation jusqu'à ce qu'il casse.
 
 C'est aussi ce qui nous a fait refuser une dernière proposition : à
 deux jours du rendu, simplifier le code pour le rendre plus facile à
-expliquer. Sans tests automatisés, toute modification aurait dû être
+expliquer. Sans tests automatiques (des programmes qui revérifient seuls le code), toute modification aurait dû être
 revalidée à la main sur les deux VM. Nous avons préféré documenter le
 code existant plutôt que risquer un projet qui fonctionne.
 

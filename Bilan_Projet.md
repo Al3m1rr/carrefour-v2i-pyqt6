@@ -45,7 +45,7 @@ comparative, et les trois autres sont des pistes d'évolution identifiées.
 | Serrage à droite | Should | **Fait** | Décalage latéral, ralentissement, feux de détresse ; trois garde-fous issus de l'observation |
 | Tableau de bord et métriques | Should | **Fait** | Collisions, déviations forcées, temps moyen des urgences et des véhicules ordinaires, alertes en cours |
 | Commandes opérateur | Should | **Fait** | Ajout et retrait de chaque type d'usager, choix du niveau de priorité des alertes |
-| Étude comparative | Should | **Fait** | Cinq configurations mesurées sur des situations de trafic identiques (graine fixée), résultats en CSV et en graphique |
+| Étude comparative | Should | **Fait** | Cinq configurations mesurées sur des situations de trafic identiques (la même suite d'usagers aléatoires est rejouée à l'identique), résultats en CSV et en graphique |
 | Authentification HMAC des alertes | Should | **Fait** | Signature HMAC-SHA256 des alertes du boîtier ambulance ; une alerte à signature invalide est rejetée |
 | Mode dégradé en cas de perte réseau | Should | **Partiel** | Le client détecte la perte, passe en rouge, désactive ses boutons et se reconnecte seul ; la passerelle prévient aussi les clients quand le moteur tombe. La bascule des feux en cycle fixe n'est pas simulée |
 | Export des statistiques | Could | **Partiel** | Fait pour l'étude comparative (CSV et histogramme PNG). Les statistiques de session restent consultables en base, sans export |
@@ -86,10 +86,9 @@ identifiées :
 - les trois *Could have* restants : conduite propre aux véhicules
   autonomes, taux de non-respect paramétrable, latence et pertes
   simulées ;
-- l'envoi des usagers déviés vers la branche la moins chargée ;
 - une réservation d'intersection, qui remplacerait les garde-fous
   empiriques actuels et supprimerait probablement les collisions
-  résiduelles, environ cinq pour 12 000 ticks ;
+  résiduelles, environ cinq pour 12 000 pas de simulation (environ 6 min 40 s de trafic) ;
 - la comparaison du temps de traversée des usagers ordinaires d'une
   configuration à l'autre, qui compléterait la mesure du gain obtenu
   pour les urgences ;
@@ -145,7 +144,7 @@ situations de trafic identiques. C'est elle qui a révélé le résultat
 contre-intuitif ci-dessus.
 
 **Les collisions.** Les premières versions en produisaient plus de
-2 400 pour 12 000 ticks. Le travail sur les règles de priorité —
+2 400 pour 12 000 pas de simulation. Le travail sur les règles de priorité —
 trajectoires sécantes, refus de priorité en tourne-à-gauche,
 interdiction de bloquer le carrefour — les a ramenées à environ cinq.
 Les cas restants surviennent dans des configurations de croisement
@@ -325,7 +324,7 @@ l'architecture stabilisée, elle décrit le projet tel qu'il est livré.
 | Risque prévu | S'est-il produit ? | Mesures prévues | Ce qui s'est passé |
 |---|---|---|---|
 | Retard sur le moteur de simulation | Non | Jalon J3, périmètre *Could* sacrifiable | Moteur terminé dès la semaine 38 |
-| Conflits et collisions entre usagers | Oui, au début : plus de 2 400 collisions pour 12 000 pas | Longues campagnes de tests, scénarios rejouables | Ramenées à environ cinq ; la graine fixée de l'étude comparative permet de rejouer les mêmes situations |
+| Conflits et collisions entre usagers | Oui, au début : plus de 2 400 collisions pour 12 000 pas | Longues campagnes de tests, scénarios rejouables | Ramenées à environ cinq ; l'étude comparative rejoue à l'identique les mêmes situations de trafic |
 | Panne ou perte de temps sur les VM | Oui, plusieurs journées au déploiement | Dépôt distant, instantanés de VM, exécution sur un seul poste | Réseau stabilisé par des profils fixes et des scripts d'installation ; déploiement validé à trois reprises |
 
 Les trois risques identifiés dans le cahier des charges ont été

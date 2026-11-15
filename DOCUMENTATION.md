@@ -54,7 +54,7 @@ l'affichage :
 - le cœur métier n'est jamais exposé — un client ne joint jamais la VM1.
 
 Chaque base est placée **auprès du processus qui écrit dedans** : le
-moteur enregistre chaque usager à chaque tick, la passerelle n'écrit
+moteur enregistre chaque usager à chaque tick (pas de simulation, 1/30 de seconde), la passerelle n'écrit
 qu'au début et à la fin d'une session.
 
 ---
