@@ -100,6 +100,32 @@ identifiées :
 
 ## 2. Conclusion technique
 
+### Un choix de conception ancré dans l'existant
+
+Avant de concevoir le système, nous nous sommes documentés sur ce qui
+existe déjà pour donner la priorité aux véhicules de secours. Nous
+voulions un projet **réaliste et réalisable dans la vraie vie**, et non
+un scénario futuriste qui supposerait des infrastructures et des budgets
+hors de portée.
+
+- **La préemption des feux** par un émetteur embarqué sur le véhicule de
+  secours existe déjà (systèmes de type *Opticom*, optiques puis GPS et
+  radio, avec messages à code de sécurité et choix du véhicule le plus
+  prioritaire). Elle inspire notre centrale V2I, nos niveaux de priorité
+  et la signature HMAC des alertes.
+- **L'alerte aux conducteurs** à l'approche d'un véhicule d'urgence est
+  normalisée en Europe dans les services coopératifs C-ITS (norme ETSI
+  TS 101 539-1) et a été testée en conditions réelles, notamment à
+  Salzburg avec la Croix-Rouge. Notre alerte anticipée s'en inspire.
+- **Le Code de la route** appliqué est celui d'aujourd'hui.
+
+Il en découle des choix sobres : un seul équipement ajouté au véhicule
+de secours, des actions que sait déjà faire un gestionnaire de voirie
+(commander les feux, allumer un panneau), aucun usager obligatoirement
+équipé, et des échanges en JSON sur TCP qu'une liaison radio dédiée
+remplacerait en situation réelle. Les sources sont indiquées dans le
+`README.md` du dépôt.
+
 ### Les difficultés rencontrées, et comment nous les avons levées
 
 **La préemption des feux ne suffisait pas — et faisait pire.** Notre
