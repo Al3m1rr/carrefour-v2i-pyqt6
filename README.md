@@ -49,6 +49,60 @@ alors sur la VM1, la passerelle et l'interface sur la VM2.
 
 ---
 
+## Pourquoi ce choix : un système réaliste et réalisable
+
+Avant de concevoir quoi que ce soit, nous nous sommes documentés sur ce
+qui existe déjà pour donner la priorité aux véhicules de secours aux
+carrefours. Notre objectif était un projet **réaliste et réalisable dans
+la vraie vie**, pas un scénario futuriste qui supposerait des
+infrastructures et des budgets hors de portée.
+
+**Ce qui existe déjà, et dont nous nous sommes inspirés :**
+
+- **La préemption des feux pour les secours.** Des systèmes comme
+  *Opticom* équipent les véhicules d'urgence d'un émetteur (optique,
+  puis GPS et radio) que le contrôleur de feux du carrefour détecte pour
+  passer au vert sur leur axe. Quand plusieurs véhicules se présentent,
+  le contrôleur retient le plus prioritaire, et les messages sont
+  signés pour éviter qu'un tiers les imite
+  ([brevets Opticom](https://image-ppubs.uspto.gov/dirsearch-public/print/downloadPdf/8884783)).
+  C'est l'origine de notre centrale V2I, de nos niveaux de priorité et
+  de l'**authentification HMAC** des alertes.
+- **L'alerte aux conducteurs à l'approche d'un véhicule d'urgence.** Elle
+  est normalisée en Europe dans les services coopératifs C-ITS
+  (*Emergency Vehicle Approaching*, messages DENM,
+  [ETSI TS 101 539-1](https://etsi.org/deliver/etsi_TS/101500_101599/10153901/01.01.01_60/ts_10153901v010101p.pdf))
+  et a été testée avec la Croix-Rouge à Salzburg
+  ([Salzburg Research](https://www.salzburgresearch.at/en/2023/c-its-more-safety-for-emergency-vehicles/)).
+  Elle prévient les conducteurs avant qu'ils n'entendent ou ne voient
+  le véhicule : notre **alerte anticipée** de douze secondes s'en
+  inspire.
+- **Le code de la route tel qu'il est.** Le serrage à droite, la
+  priorité aux secours et les règles de passage (priorité au piéton
+  engagé, refus de priorité en tourne-à-gauche) sont ceux d'aujourd'hui.
+
+**Ce que cela implique pour nos choix :**
+
+- Le seul équipement ajouté au véhicule de secours est un **boîtier
+  émetteur** ; le carrefour reçoit l'alerte et agit sur ses feux et sa
+  signalisation. Le système ne suppose pas que les véhicules ordinaires
+  soient équipés : ils sont guidés par les feux, les panneaux et le Code
+  de la route.
+- Les actions du carrefour sont celles qu'un gestionnaire de voirie sait
+  déjà faire : commander les feux, allumer un panneau « sens interdit —
+  sauf urgences ».
+- Aucune infrastructure lourde n'est requise, ni véhicules entièrement
+  autonomes, ni cartographie réelle, ni réseau spécifique : les
+  échanges reposent sur de simples messages JSON sur TCP, que l'on
+  remplacerait par une liaison radio dédiée en situation réelle.
+- Les **mesures** (étude comparative) servent à vérifier que chaque
+  mécanisme apporte quelque chose avant de le conserver, plutôt qu'à
+  empiler des fonctions séduisantes. C'est ainsi que nous avons constaté
+  que la préemption des feux seule n'améliore pas la situation et que la
+  voie réservée est indispensable.
+
+---
+
 ## Le principe implémenté : la voie réservée aux secours
 
 1. Un véhicule d'urgence émet une **alerte V2I** en approchant du carrefour.
