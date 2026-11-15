@@ -60,10 +60,18 @@ déploiement.
 Nous retenons ici les demandes qui ont réellement infléchi le projet,
 avec notre analyse de la réponse obtenue.
 
+*Note de lecture.* Les prompts ci-dessous sont des **reformulations** :
+nous en avons clarifié et structuré la rédaction pour la lisibilité,
+en conservant l'intention et le contenu de chaque demande. Les
+formulations d'origine, plus familières et moins précises, sont
+conservées dans l'historique de nos conversations avec l'outil.
+
 ### Prompt 1 — Le cadrage initial
 
-> « je souhaite faire ce projet tout est expliqué dans ce document fais
-> moi un récapitulatif de ce que tu comprends »
+> « Voici le document de cadrage de notre projet de SAÉ. Rédige une
+> synthèse structurée de ce que tu comprends du besoin : contexte,
+> acteurs, objectifs et contraintes. Signale ensuite les points flous ou
+> ambigus. »
 
 **Réponse obtenue** : une reformulation structurée de la fiche QQOQCP,
 suivie d'une liste de points flous à clarifier avec le client.
@@ -75,10 +83,15 @@ La vraie valeur était dans la liste des zones d'ombre, qui nous a servi
 proposition d'architecture **avant** que nous ayons les réponses du
 client : nous aurions dû attendre.
 
+**Version à privilégier** : « … Dresse la liste des questions à poser au
+client pour lever chaque point flou, et ne propose pas d'architecture
+avant que nous ayons ses réponses. »
+
 ### Prompt 2 — Le choix de la pile technique
 
-> « je veux commencer le projet rédige moi le code avec un affichage
-> graphique ect une base »
+> « Nous voulons démarrer le développement du projet. Écris un premier
+> prototype de la simulation avec un affichage graphique et une base de
+> données. » *(aucune contrainte technologique n'était précisée)*
 
 **Réponse obtenue** : un prototype complet en **Pygame** avec MariaDB.
 
@@ -91,9 +104,17 @@ Le prototype a dû être entièrement réécrit quand nous avons transmis le
 cahier des charges. **Leçon retenue** : fournir les contraintes avant
 de demander du code, pas après.
 
+**Version à privilégier** : « Écris un premier prototype de simulation
+en respectant ces contraintes du cahier des charges : interface en
+PyQt6, communication par sockets TCP et messages JSON, persistance
+MariaDB, Pygame interdit. Si une contrainte te manque, pose-moi la
+question avant de produire du code. »
+
 ### Prompt 3 — La demande d'auto-critique
 
-> *(demande de regard critique sur le système produit)*
+> « Adopte un regard critique sur le système que tu as produit :
+> quelles sont ses faiblesses, et quelles conclusions nos mesures ne
+> permettent-elles pas d'affirmer ? »
 
 **Réponse obtenue** : une liste de faiblesses, dont le fait que le gain
 attribué à la voie réservée n'était pas isolé de celui du simple feu
@@ -108,10 +129,10 @@ faire. Sans cette demande, nous aurions présenté une conclusion fausse.
 
 ### Prompt 4 — La répartition sur deux VM
 
-> « cette répartition doit se faire à travers les processus […] il ne
-> voulait pas que tous les processus soient sur une VM, donc on doit
-> répartir les processus sur les 2 VM, mais également les bases de
-> données »
+> « Le client exige que les processus ne soient pas tous regroupés sur
+> une seule machine virtuelle : ils doivent être répartis sur les deux
+> VM Debian 13, ainsi que les bases de données. Propose un découpage
+> justifié, puis implémente-le. »
 
 **Réponse obtenue** : une proposition d'architecture séparant le moteur
 de la passerelle, avec une base auprès de chaque processus, puis
@@ -125,7 +146,10 @@ cependant dû choisir nous-mêmes entre plusieurs découpages possibles.
 
 ### Prompt 5 — Le déploiement réel
 
-> *(envoi de captures d'écran des erreurs rencontrées sur les VM)*
+> « Voici une capture de l'erreur obtenue sur la VM lors de
+> l'exécution de ce script. Analyse-la, explique la cause probable,
+> propose un correctif et indique comment vérifier qu'il fonctionne. »
+> *(accompagné de captures d'écran des erreurs rencontrées sur les VM)*
 
 **Réponse obtenue** : des diagnostics successifs, dont certains faux
 avant d'être corrigés.
