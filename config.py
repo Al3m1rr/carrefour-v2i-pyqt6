@@ -1,3 +1,11 @@
+"""Paramètres de configuration du projet, regroupés en un seul endroit.
+
+Ce module rassemble la géométrie de la scène, les constantes de la
+simulation, les réglages des mécanismes V2I et les coordonnées réseau et
+base de données des deux machines virtuelles. Les valeurs sensibles au
+déploiement (adresses, ports, identifiants) sont lues dans des variables
+d'environnement, avec une valeur par défaut utilisable en local.
+"""
 import os
 
 # ============================================================
