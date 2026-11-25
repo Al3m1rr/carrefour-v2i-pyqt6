@@ -18,15 +18,34 @@ réseau et la sienne (voir *Architecture répartie* plus bas).
 
 ## ▶ Déploiement
 
-Le projet se déploie sur **deux machines virtuelles Debian 13 dotées
-d'un bureau**, sous VirtualBox, sur un poste de l'IUT. **Aucune VM n'est
-à installer ni à configurer depuis zéro** : la VM `Debian13_FR` est à
-récupérer dans le dossier réseau **Commun**, puis à copier dans
-**temp**.
+Le projet tourne sur **deux machines Debian 13 distinctes**, l'une
+portant le moteur et sa base, l'autre la passerelle et la sienne. Deux
+chemins mènent au même résultat.
+
+### Le plus simple : Proxmox, une seule commande — 5 min
+
+Sur le shell du serveur Proxmox, en root :
+
+```bash
+curl -fsSLO https://raw.githubusercontent.com/Al3m1rr/carrefour-v2i-pyqt6/main/deploiement/proxmox.sh && bash proxmox.sh
+```
+
+Le script crée les deux conteneurs, installe tout, démarre les services
+et affiche la commande à taper pour lancer l'interface. **Aucune adresse
+IP à choisir, aucune carte réseau à configurer.**
+
+👉 **[Guide Proxmox](deploiement/GUIDE_PROXMOX.md)** — une page, avec la
+marche à suivre si vous n'avez que l'interface web.
+
+### L'autre voie : deux VM VirtualBox — 30 min
+
+Sur un poste de l'IUT, avec la VM `Debian13_FR` à récupérer dans le
+dossier réseau **Commun** puis à copier dans **temp**. La configuration
+réseau y est manuelle.
 
 👉 **[Guide de déploiement pas à pas](deploiement/GUIDE_DEPLOIEMENT.md)**
-— environ 30 minutes, à dérouler de haut en bas, avec un point de
-contrôle après chaque étape critique.
+— à dérouler de haut en bas, avec un point de contrôle après chaque
+étape critique.
 
 📖 **[Documentation technique](DOCUMENTATION.md)** — comment le projet
 est construit et pourquoi : l'architecture, le parcours d'une donnée,
@@ -40,12 +59,14 @@ du système.
 | [DOCUMENTATION.md](DOCUMENTATION.md) | Architecture, circulation des données, mécanismes clés |
 | [Bilan_Projet.pdf](Bilan_Projet.pdf) | Revue des fonctionnalités, conclusion technique et organisationnelle, analyse du planning |
 | [IAGraphie.pdf](IAGraphie.pdf) | Usage des IA génératives : cartographie, prompts, limites constatées, réflexion éthique |
-| [deploiement/GUIDE_DEPLOIEMENT.md](deploiement/GUIDE_DEPLOIEMENT.md) | Installation pas à pas sur deux VM |
+| [deploiement/GUIDE_PROXMOX.md](deploiement/GUIDE_PROXMOX.md) | Déploiement en une commande sur Proxmox |
+| [deploiement/GUIDE_DEPLOIEMENT.md](deploiement/GUIDE_DEPLOIEMENT.md) | Installation pas à pas sur deux VM VirtualBox |
 
-En résumé : on récupère la VM, on en obtient une seconde par clonage,
-puis, sur chacune, on clone ce dépôt et on lance un script qui installe
-MariaDB, crée la base du rôle et fixe l'adresse réseau. Le moteur tourne
-alors sur la VM1, la passerelle et l'interface sur la VM2.
+En résumé : sur Proxmox, un script crée les deux conteneurs et installe
+tout ; sous VirtualBox, on récupère la VM, on en obtient une seconde par
+clonage, puis on lance sur chacune le script qui installe MariaDB, crée
+la base du rôle et fixe l'adresse réseau. Dans les deux cas, le moteur
+tourne sur la première machine et la passerelle sur la seconde.
 
 ---
 
